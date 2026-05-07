@@ -42,6 +42,7 @@ project "HeistedServer"
         "SDK/SDK/CoreUObject_functions.cpp",
         "SDK/SDK/Engine_functions.cpp",
         "SDK/SDK/FortniteGame_functions.cpp",
+        "SDK/SDK/GameplayAbilities_functions.cpp",
     }
     includedirs {
         "SDK",

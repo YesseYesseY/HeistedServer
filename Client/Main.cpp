@@ -6,6 +6,7 @@
 using namespace SDK;
 
 #include <Hook.hpp>
+#include <Utils.hpp>
 
 bool (*UWorldExecOriginal)(UWorld* World, int64 a2, const wchar_t* Cmd, int64 a4);
 bool UWorldExecHook(UWorld* World, int64 a2, const wchar_t* Cmd, int64 a4)

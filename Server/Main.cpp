@@ -14,6 +14,7 @@ using namespace SDK;
 #include "Net.hpp"
 #include "GameMode.hpp"
 #include "Player.hpp"
+#include "Abilities.hpp"
 
 DWORD MainThread(HMODULE Module)
 {
@@ -35,6 +36,7 @@ DWORD MainThread(HMODULE Module)
     Net::Init();
     GameMode::Init();
     Player::Init();
+    Abilities::Init();
 
     Utils::ExecuteConsoleCommand(L"log LogFortUIDirector None");
     Utils::ExecuteConsoleCommand(L"open Asteria_Terrain");
