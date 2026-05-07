@@ -128,5 +128,22 @@ namespace Net
         *(bool*)(ImageBase + 0xE81611D) = true; // GIsServer
         *(bool*)(ImageBase + 0xE83E1B2) = false; // GIsClient
         UWorld::GetWorld()->OwningGameInstance->LocalPlayers.Remove(0);
+
+#define PATCH_BYTE(Offset, Val) \
+        { \
+        auto Addr = (LPVOID)(ImageBase + Offset); \
+        DWORD yes; \
+        VirtualProtect(Addr, 1, PAGE_EXECUTE_READWRITE, &yes); \
+        *(uint8*)(Addr) = Val; \
+        VirtualProtect(Addr, 1, yes, &yes); \
+        }
+
+        // Context: On this build alot of functions that call GetNetMode get messed up and decide to hardcode NetMode to be 3
+        //          There are only 2 builds i've seen this on, 24.40 and 26.30. Even 28.30 which is after those 2 doesn't have this.
+        //          I noticed it on UKismetSystemLibrary::IsServer/IsDedicatedServer but ALOT of funcs have it ...
+        //          I suspect one of these messed up functions is why the pickaxe doesn't work but it could also just be because im bad at making a server
+        PATCH_BYTE(0x15576D3, 1); // UKismetSystemLibrary::IsServer
+        PATCH_BYTE(0x178302A, 1); // UKismetSystemLibrary::IsDedicatedServer
+        PATCH_BYTE(0xECE82D, 1);
     }
 }

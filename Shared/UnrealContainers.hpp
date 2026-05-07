@@ -25,6 +25,33 @@ namespace UC
 	typedef uint32_t uint32;
 	typedef uint64_t uint64;
 
+	namespace FMemory
+	{
+		inline void* (*EngineRealloc)(void* Block, uint64 NewSize, uint32 Alignment) = nullptr;
+
+		inline int32 AllocCount = 0x0;
+
+		[[nodiscard]] inline void Init(void* ReallocAddress)
+		{
+			EngineRealloc = reinterpret_cast<decltype(EngineRealloc)>(ReallocAddress);
+		}
+
+		[[nodiscard]] inline void* Malloc(uint64 Size, uint32 Alignment = 0x0 /* auto */)
+		{
+			return EngineRealloc(nullptr, Size, Alignment);
+		}
+
+		[[nodiscard]] inline void* Realloc(void* Ptr, uint64 Size, uint32 Alignment = 0x0 /* auto */)
+		{
+			return EngineRealloc(Ptr, Size, Alignment);
+		}
+
+		inline void Free(void* Ptr)
+		{
+			EngineRealloc(Ptr, 0x0, 0x0);
+		}
+	}
+
 	template<typename ArrayElementType>
 	class TArray;
 
@@ -273,16 +300,21 @@ namespace UC
 		inline const ArrayElementType& GetUnsafe(int32 Index) const { return Data[Index]; }
 
 	public:
-		/* Adds to the array if there is still space for one more element */
-		inline bool Add(const ArrayElementType& Element)
+		inline void Reserve(int32 Count)
+		{
+			if (GetSlack() < Count)
+				MaxElements += Count; 
+			
+			Data = static_cast<ArrayElementType*>(FMemory::Realloc(Data, MaxElements * ElementSize, ElementAlign));
+		}
+
+		inline void Add(const ArrayElementType& Element)
 		{
 			if (GetSlack() <= 0)
-				return false;
+				Reserve(3);
 
 			Data[NumElements] = Element;
 			NumElements++;
-
-			return true;
 		}
 
 		inline bool Remove(int32 Index)

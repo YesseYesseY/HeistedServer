@@ -1,18 +1,8 @@
 namespace Player
 {
-    void ServerAcknowledgePossession(APlayerController* Controller, APawn* Pawn)
+    void ServerAcknowledgePossession(AFortPlayerControllerAthena* PlayerController, APawn* Pawn)
     {
-        Controller->AcknowledgedPawn = Pawn;
-
-        auto PlayerState = (AFortPlayerStateAthena*)Controller->PlayerState;
-        auto ASC = PlayerState->AbilitySystemComponent;
-
-        auto AbilitySet = UObject::FindObject<UFortAbilitySet>("FortAbilitySet GAS_AthenaPlayer.GAS_AthenaPlayer");
-        for (auto Ability : AbilitySet->GameplayAbilities)
-        {
-            ASC->K2_GiveAbility(Ability, 1, 1);
-        }
-        ASC->K2_GiveAbility(UObject::FindClassFast("GA_Athena_TacticalSprint_C"), 1, 1);
+        PlayerController->AcknowledgedPawn = Pawn;
     }
 
     void ServerCheat(AFortPlayerControllerAthena* Controller, FString& FMsg)
@@ -21,7 +11,9 @@ namespace Player
 
         if (Msg == L"test")
         {
-            MsgBox("UwU");
+            MsgBox("{}", UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
+            // UWorld::GetWorld()->NetDriver = nullptr;
+            // MsgBox("{}", UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
         }
         else if (Msg == L"dumpobjects")
         {

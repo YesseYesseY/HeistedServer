@@ -43,14 +43,39 @@ namespace GameMode
         translivesmatter.Scale3D = { 1, 1, 1 };
         auto Pawn = (AFortPlayerPawn*)GameMode->SpawnDefaultPawnAtTransform(NewPlayer, translivesmatter);
         Pawn->bCanBeDamaged = false;
-        static void (*ApplyCharacterCustomization)(AFortPlayerState*, AFortPlayerPawn*) = decltype(ApplyCharacterCustomization)(InSDKUtils::GetImageBase() + 0x890425C);
-        ApplyCharacterCustomization((AFortPlayerState*)NewPlayer->PlayerState, Pawn);
         return Pawn;
+    }
+
+    void (*HandleStartingNewPlayerOriginal)(AFortGameModeBR* GameMode, APlayerController* PlayerController);
+    void HandleStartingNewPlayer(AFortGameModeBR* GameMode, AFortPlayerControllerAthena* PlayerController)
+    {
+        HandleStartingNewPlayerOriginal(GameMode, PlayerController);
+
+        auto Pawn = (AFortPlayerPawnAthena*)PlayerController->Pawn;
+
+        static void (*ApplyCharacterCustomization)(AFortPlayerState*, AFortPlayerPawn*) = decltype(ApplyCharacterCustomization)(InSDKUtils::GetImageBase() + 0x890425C);
+        ApplyCharacterCustomization((AFortPlayerState*)PlayerController->PlayerState, Pawn);
+
+        auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
+        auto ASC = PlayerState->AbilitySystemComponent;
+
+        auto AbilitySet = UObject::FindObject<UFortAbilitySet>("FortAbilitySet GAS_AthenaPlayer.GAS_AthenaPlayer");
+        for (auto Ability : AbilitySet->GameplayAbilities)
+        {
+            ASC->K2_GiveAbility(Ability, 1, 1);
+        }
+        ASC->K2_GiveAbility(UObject::FindClassFast("GA_Athena_TacticalSprint_C"), 1, 1);
+
+        for (int i = 0; i < 5; i++) // 5 = The 4 main builds + EditTool, after 5 there is just smartbuilds
+            Inventory::GiveItem(PlayerController, GameMode->StartingItems[i].Item, GameMode->StartingItems[i].Count);
+
+        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortWeaponMeleeItemDefinition WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01"));
     }
 
     void Init()
     {
         Hook::VTable<AFortGameModeBR>(2328 / 8, ReadyToStartMatchHook);
         Hook::VTable<AFortGameModeBR>(1832 / 8, SpawnDefaultPawnForHook);
+        Hook::VTable<AFortGameModeBR>(1880 / 8, HandleStartingNewPlayer, &HandleStartingNewPlayerOriginal);
     }
 }

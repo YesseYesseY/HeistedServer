@@ -12,6 +12,7 @@ using namespace SDK;
 #include <Utils.hpp>
 
 #include "Net.hpp"
+#include "Inventory.hpp"
 #include "GameMode.hpp"
 #include "Player.hpp"
 #include "Abilities.hpp"
@@ -33,12 +34,15 @@ DWORD MainThread(HMODULE Module)
     return 0;
 #endif
 
+    FMemory::Init((void*)(InSDKUtils::GetImageBase() + 0x3E54B6C));
     Net::Init();
     GameMode::Init();
     Player::Init();
     Abilities::Init();
+    Inventory::Init();
 
     Utils::ExecuteConsoleCommand(L"log LogFortUIDirector None");
+    Utils::ExecuteConsoleCommand(L"log LogAbilitySystem VeryVerbose");
     Utils::ExecuteConsoleCommand(L"open Asteria_Terrain");
 
     return 0;
