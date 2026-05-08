@@ -32,6 +32,11 @@ namespace Hook
         return true;
     }
 
+    bool ReturnFalseHook()
+    {
+        return false;
+    }
+
     void ReturnHook()
     {
         return;

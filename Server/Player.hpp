@@ -9,11 +9,13 @@ namespace Player
     {
         auto Msg = FMsg.ToWString();
 
-        if (Msg == L"test")
+        if (Msg.starts_with(L"server "))
         {
-            MsgBox("{}", UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
-            // UWorld::GetWorld()->NetDriver = nullptr;
-            // MsgBox("{}", UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
+            Utils::ExecuteConsoleCommand(Msg.substr(7).c_str());
+        }
+        else if (Msg == L"test")
+        {
+            MsgBox("{} {}", UKismetSystemLibrary::IsServer(UWorld::GetWorld()), UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
         }
         else if (Msg == L"dumpobjects")
         {

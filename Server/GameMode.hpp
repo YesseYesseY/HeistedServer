@@ -1,3 +1,5 @@
+#define SkipAircraft 0
+
 namespace GameMode
 {
     bool ReadyToStartMatchHook(AFortGameModeBR* GameMode)
@@ -16,7 +18,11 @@ namespace GameMode
             GameState->OnRep_CurrentPlaylistInfo();
 
             auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+#if SkipAircraft
             Logic->GamePhase = EAthenaGamePhase::None;
+#else
+            Logic->GamePhase = EAthenaGamePhase::Warmup;
+#endif
             Logic->OnRep_GamePhase(EAthenaGamePhase::Setup);
 
             Net::Listen();
@@ -38,9 +44,10 @@ namespace GameMode
 
     APawn* SpawnDefaultPawnForHook(AFortGameModeBR* GameMode, AController* NewPlayer, AActor* StartSpot)
     {
-        FTransform translivesmatter; // = StartSpot->GetTransform();
+        FTransform translivesmatter = StartSpot->GetTransform();
+#if SkipAircraft
         translivesmatter.Translation = { 0, 0, 10000 };
-        translivesmatter.Scale3D = { 1, 1, 1 };
+#endif
         auto Pawn = (AFortPlayerPawn*)GameMode->SpawnDefaultPawnAtTransform(NewPlayer, translivesmatter);
         Pawn->bCanBeDamaged = false;
         return Pawn;
