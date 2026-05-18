@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <iostream>
 #include <fstream>
+#include <set>
 
 #define MsgBox(...) MessageBoxA(NULL, std::format(__VA_ARGS__).c_str(), "HeistedServer", MB_OK)
 #define JustLoadMeIntoAsteriaIWantToDumpAnSDK 0
@@ -10,6 +11,7 @@ using namespace SDK;
 
 #include <Hook.hpp>
 #include <Utils.hpp>
+#include <Memcury.hpp>
 
 #include "Net.hpp"
 #include "Inventory.hpp"

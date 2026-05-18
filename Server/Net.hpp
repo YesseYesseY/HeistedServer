@@ -130,6 +130,82 @@ namespace Net
         *(bool*)(ImageBase + 0xE83E1B2) = false; // GIsClient
         UWorld::GetWorld()->OwningGameInstance->LocalPlayers.Remove(0);
 
+        // NOTE: How this works is it scans for all AttemptDeriveFromURL calls
+        //       When it finds a call it searches for the first part of UWorld::GetNetMode, "if (NetDriver != nullptr)"
+        //       If NetDriver is not null it returns NM_Client, technically you could try to find all NM_Client in assembly and change it to 1
+        //       But that is way too complicated when you concider for example "mov ebx, 1;mov eax, ebx"
+        //       Instead of doing that it's simpler to replace the jz to jnz in the assembly, this basically inverts the if statement and goes to the next one
+        //       The next one is "if (DemoNetDriver && ...)" which will always be false, and because of that it goes to the last step
+        //       Calling AttemptDeriveFromURL and returns that, so that function is all that need to be hooked instead of going around all the assembly scanning for 3s.
+        //       This works for 99% of the GetNetMode calls, the rest of them i just did manually
+        {
+            const auto sizeOfImage = Memcury::PE::GetNTHeaders()->OptionalHeader.SizeOfImage;
+            const auto scanBytes = reinterpret_cast<std::uint8_t*>(Memcury::PE::GetModuleBase());
+
+            auto ADFU = (uintptr_t)(ImageBase + 0x1D7D9E8);
+
+            for (auto i = 0ul; i < sizeOfImage - 1; ++i)
+            {
+                if (scanBytes[i] == 0xE8)
+                {
+                    uintptr_t currAddr = reinterpret_cast<uintptr_t>(&scanBytes[i]);
+                    uintptr_t relPtr = currAddr + 1 + 4 + *reinterpret_cast<int32_t*>(currAddr + 1);
+                    if (relPtr != ADFU)
+                        continue;
+
+                    if (currAddr == 0x141DCD67A)
+                        continue;
+
+                    auto Idx = -1;
+                    auto Scanner = Memcury::Scanner(currAddr).ScanForEitherPattern({ "39 ? 38", "83 ? 38 00" }, false, 0, &Idx);
+
+                    if (Idx == 1)
+                        Scanner.AbsoluteOffset(1);
+
+                    if (Scanner.Get() != currAddr)
+                    {
+                        Scanner.AbsoluteOffset(3);
+meow:
+                        uintptr_t PatchAddr = Scanner.Get(); // 0x74/0x75
+                        if (*(uint8*)(PatchAddr) == 0x0F)
+                        {
+                            if (*(uint8*)(PatchAddr + 1) == 0x85)
+                            {
+                                DWORD yes;
+                                VirtualProtect((LPVOID)(PatchAddr + 1), 1, PAGE_EXECUTE_READWRITE, &yes);
+                                *(uint8*)(PatchAddr + 1) = 0x84;
+                                VirtualProtect((LPVOID)(PatchAddr + 1), 1, yes, &yes);
+                            }
+                            else if (*(uint8*)(PatchAddr + 1) == 0x84)
+                            {
+                                DWORD yes;
+                                VirtualProtect((LPVOID)(PatchAddr + 1), 1, PAGE_EXECUTE_READWRITE, &yes);
+                                *(uint8*)(PatchAddr + 1) = 0x85;
+                                VirtualProtect((LPVOID)(PatchAddr + 1), 1, yes, &yes);
+                            }
+                        }
+                        else if (*(uint8*)(PatchAddr) == 0x74)
+                        {
+                            DWORD yes;
+                            VirtualProtect((LPVOID)PatchAddr, 1, PAGE_EXECUTE_READWRITE, &yes);
+                            *(uint8*)(PatchAddr) = 0x75;
+                            VirtualProtect((LPVOID)PatchAddr, 1, yes, &yes);
+                        }
+                        else if (*(uint8*)(PatchAddr) == 0x75)
+                        {
+                            if (PatchAddr != 0x143818215)
+                            {
+                                DWORD yes;
+                                VirtualProtect((LPVOID)PatchAddr, 1, PAGE_EXECUTE_READWRITE, &yes);
+                                *(uint8*)(PatchAddr) = 0x74;
+                                VirtualProtect((LPVOID)PatchAddr, 1, yes, &yes);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
 #define PATCH_BYTE(Offset, Val) \
         { \
         auto Addr = (LPVOID)(ImageBase + Offset); \
@@ -139,33 +215,28 @@ namespace Net
         VirtualProtect(Addr, 1, yes, &yes); \
         }
 
-        // Context: On this build alot of functions that call GetNetMode get messed up and decide to hardcode NetMode to be 3
-        //          There are only 2 builds i've seen this on, 24.40 and 26.30. Even 28.30 which is after those 2 doesn't have this.
-        //          I noticed it on UKismetSystemLibrary::IsServer/IsDedicatedServer but ALOT of funcs have it ...
-        //          I suspect one of these messed up functions is why the pickaxe doesn't work but it could also just be because im bad at making a server
-        // PATCH_BYTE(0x15576D3, 1); // UKismetSystemLibrary::IsServer
-        // PATCH_BYTE(0x178302A, 1); // UKismetSystemLibrary::IsDedicatedServer
-        // PATCH_BYTE(0xECE82D, 1);
-
-        std::vector<uintptr_t> Patches = {
-            // "B8 03 00 00 00 83 F8 01"
-            0x140ECE82C, 0x140ED5F58, 0x140ED66CE, 0x140EDB909, 0x1410773D5, 0x1410B867F, 0x1410E05EC, 0x1411021D7, 0x1411C4127, 0x1411C44C3,
-            0x14129B997, 0x14129D6A8, 0x14129DB97, 0x14129DE3D, 0x1412A6B21, 0x14137A9FB, 0x1413941DF, 0x1414B65F8, 0x1414C2F15, 0x1414EE0BD,
-            0x1414FCB58, 0x1415017B5, 0x141555B9B, 0x14155D69A, 0x1415BF00D, 0x1415BF0C3, 0x1415F1575, 0x141617247, 0x141714E2E, 0x141783029,
-            0x1417FEA14, 0x1418F493E, 0x1418FB810, 0x141916D23, 0x1419FE7E4, 0x141A35CEE, 0x141A36516, 0x141AB56F5, 0x141AC9809, 0x141ADCD06,
-            0x141AE1639, 0x141C14C21, 0x141C15C3C, 0x141C165A0, 0x141C8E25D, 0x141C910F2, 0x141D029D6, 0x141D31B82, 0x141EAC348, 0x141EFA6D7,
-            0x141F61FBF, 0x14208DADE, 0x1420CE34E, 0x1420D11C4, 0x1420D1344, 0x1420D1A56, 0x142200250, 0x142229331, 0x14227D9B8, 0x14229C5EA,
-            0x14230BD24, 0x142361BA4, 0x142417764, 0x14241AE48, 0x14241BD49, 0x1424C7287, 0x142527028, 0x1425271D8, 0x1425DC15A, 0x14268F284,
-            0x1426E8003, 0x1427BDDA7, 0x14285F20B, 0x142A5EACC, 0x142B5F6EE, 0x142E44B94, 0x142E47FE2, 0x142EC6010, 0x142FABE30, 0x143037F8A,
-            0x143121540, 0x1432FF8E1, 0x14339B9A1, 0x1433AEE03, 0x14341CF2F, 0x14382A9A3, 0x14386869B, 0x143869B30,
-
-            // "B8 03 00 00 00 83 F8 03"
-            0x140ECF9BE, 0x14132AB7F, 0x1414BCFFE, 0x1415576D2, 0x141835463, 0x14183B663, 0x141D7EB5B, 0x1420CA77D, 0x14229C1FE, 0x14229C318, 
-            0x1422CD717, 0x14241BEF1, 0x142810B6A, 0x14296C0E1, 0x1431BE389, 0x1432C29E2, 
-        };
-        for (auto Patch : Patches)
-        {
-            PATCH_BYTE(Patch - 0x140000000 + 1, 1);
-        }
+        PATCH_BYTE(0x141003ABE - 0x140000000,     0x74);
+        PATCH_BYTE(0x141314E96 - 0x140000000,     0x74);
+        // PATCH_BYTE(0x141830C32 - 0x140000000,     0x74);
+        PATCH_BYTE(0x142E7B684 - 0x140000000,     0x74);
+        PATCH_BYTE(0x142FC1FB0 - 0x140000000,     0x74);
+        PATCH_BYTE(0x1431BE345 - 0x140000000,     0x74);
+        PATCH_BYTE(0x143856BFC - 0x140000000,     0x74);
+        PATCH_BYTE(0x14386A08C - 0x140000000,     0x74);
+        PATCH_BYTE(0x1449DD098 - 0x140000000 + 1, 0x84);
+        PATCH_BYTE(0x1449F544D - 0x140000000,     0x75);
+        PATCH_BYTE(0x144A1A3AC - 0x140000000 + 1, 0x84);
+        PATCH_BYTE(0x146074029 - 0x140000000,     0x75);
+        PATCH_BYTE(0x146C0E72A - 0x140000000,     0x74);
+        PATCH_BYTE(0x1474F7D96 - 0x140000000,     0x75);
+        PATCH_BYTE(0x1499B689E - 0x140000000 + 1, 0x84);
+        PATCH_BYTE(0x149E91404 - 0x140000000 + 1, 0x84);
+        PATCH_BYTE(0x141DCCE84 - 0x140000000 + 1, 0x85);
+        PATCH_BYTE(0x1420CE311 - 0x140000000 + 1, 0x85);
+        PATCH_BYTE(0x14227B434 - 0x140000000 + 1, 0x85);
+        PATCH_BYTE(0x1422B6586 - 0x140000000 + 1, 0x85);
+        // PATCH_BYTE(0x143818221 - 0x140000000 + 1, 0x85);
+        PATCH_BYTE(0x146C0F91B - 0x140000000,     0x75);
+        PATCH_BYTE(0x14381825E - 0x140000000 + 3, 0x00); // FIXES PICKAXE
     }
 }
