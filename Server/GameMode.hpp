@@ -1,4 +1,4 @@
-#define SkipAircraft 0
+#define SkipAircraft 1
 
 namespace GameMode
 {
@@ -15,6 +15,7 @@ namespace GameMode
 
             auto GameState = (AFortGameStateBR*)GameMode->GameState;
             GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
+            GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
             GameState->OnRep_CurrentPlaylistInfo();
 
             auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
@@ -22,6 +23,7 @@ namespace GameMode
             Logic->GamePhase = EAthenaGamePhase::None;
 #else
             Logic->GamePhase = EAthenaGamePhase::Warmup;
+            Logic->GamePhaseStep = EAthenaGamePhaseStep::Warmup;
 #endif
             Logic->OnRep_GamePhase(EAthenaGamePhase::Setup);
 
@@ -72,11 +74,17 @@ namespace GameMode
             ASC->K2_GiveAbility(Ability, 1, 1);
         }
         ASC->K2_GiveAbility(UObject::FindClassFast("GA_Athena_TacticalSprint_C"), 1, 1);
+        // TODO Look into this not working
+        // ASC->K2_GiveAbility(UObject::FindClassFast("GA_Athena_Player_DoorBash_C"), 1, 1);
 
         for (int i = 0; i < 5; i++) // 5 = The 4 main builds + EditTool, after 5 there is just smartbuilds
             Inventory::GiveItem(PlayerController, GameMode->StartingItems[i].Item, GameMode->StartingItems[i].Count);
 
         Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortWeaponMeleeItemDefinition WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01"));
+        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortResourceItemDefinition WoodItemData.WoodItemData"));
+        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortResourceItemDefinition StoneItemData.StoneItemData"));
+        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortResourceItemDefinition MetalItemData.MetalItemData"));
+        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortWeaponMeleeItemDefinition WID_Melee_Katana_R.WID_Melee_Katana_R"));
     }
 
     void Init()

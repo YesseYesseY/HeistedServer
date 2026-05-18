@@ -17,13 +17,21 @@ namespace Inventory
         Utils::MarkArrayDirty(PlayerController->WorldInventory->Inventory);
     }
 
-    void GiveItem(AFortPlayerController* PlayerController, UFortItemDefinition* ItemDef, int32 Count = 1)
+    void GiveItem(AFortPlayerController* PlayerController, UFortItemDefinition* ItemDef, int32 Count = -1)
     {
-        if (!ItemDef || Count <= 0)
+        if (!ItemDef || Count == 0)
             return;
+
+        if (Count == -1)
+            Count = ItemDef->GetMaxStackSize(nullptr);
 
         auto Item = (UFortWorldItem*)ItemDef->CreateTemporaryItemInstanceBP(Count, 1);
         auto& Inv = PlayerController->WorldInventory->Inventory;
+        if (ItemDef->IsA(UFortWorldItemDefinition::StaticClass()))
+        {
+            auto WorldItemDef = (UFortWorldItemDefinition*)ItemDef;
+            Item->ItemEntry.LoadedAmmo = WorldItemDef->GetInitialAmmo(1);
+        }
         Inv.ReplicatedEntries.Add(Item->ItemEntry);
         Inv.ItemInstances.Add(Item);
         Update(PlayerController);

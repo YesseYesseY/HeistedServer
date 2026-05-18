@@ -18,6 +18,7 @@ using namespace SDK;
 #include "GameMode.hpp"
 #include "Player.hpp"
 #include "Abilities.hpp"
+#include "Building.hpp"
 
 DWORD MainThread(HMODULE Module)
 {
@@ -42,6 +43,7 @@ DWORD MainThread(HMODULE Module)
     Player::Init();
     Abilities::Init();
     Inventory::Init();
+    Building::Init();
 
     Utils::ExecuteConsoleCommand(L"log LogFortUIDirector None");
     Utils::ExecuteConsoleCommand(L"log LogAbilitySystem VeryVerbose");

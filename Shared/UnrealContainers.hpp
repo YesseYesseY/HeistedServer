@@ -341,6 +341,15 @@ namespace UC
 				memset(Data, 0, NumElements * ElementSize);
 		}
 
+		inline void Free() noexcept
+		{
+			if (Data)
+				FMemory::Free(Data);
+
+			NumElements = 0x0;
+			MaxElements = 0x0;
+		}
+
 	public:
 		inline int32 Num() const { return NumElements; }
 		inline int32 Max() const { return MaxElements; }

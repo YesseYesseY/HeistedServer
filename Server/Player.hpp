@@ -21,6 +21,10 @@ namespace Player
         {
             Utils::DumpObjects();
         }
+        else if (Msg == L"startaircraft")
+        {
+            // Nope :(
+        }
     }
 
     void Init()

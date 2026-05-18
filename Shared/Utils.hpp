@@ -1,15 +1,21 @@
 namespace Utils
 {
-    template <typename T>
-    T* SpawnActor(FVector Pos = {}, FRotator Rot = {}, FVector Size = { 1, 1, 1 })
+    template <typename T = AActor>
+    T* SpawnActor(UClass* ActorClass, FVector Pos = {}, FRotator Rot = {}, FVector Size = { 1, 1, 1 })
     {
         FTransform translivesmatter = UKismetMathLibrary::MakeTransform(Pos, Rot, Size);
-        auto Ret = UGameplayStatics::BeginDeferredActorSpawnFromClass(UWorld::GetWorld(), T::StaticClass(), translivesmatter, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn, nullptr, ESpawnActorScaleMethod::MultiplyWithRoot);
+        auto Ret = UGameplayStatics::BeginDeferredActorSpawnFromClass(UWorld::GetWorld(), ActorClass, translivesmatter, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn, nullptr, ESpawnActorScaleMethod::MultiplyWithRoot);
 
         if (Ret)
             Ret = UGameplayStatics::FinishSpawningActor(Ret, translivesmatter, ESpawnActorScaleMethod::MultiplyWithRoot);
 
         return (T*)Ret;
+    }
+
+    template <typename T>
+    T* SpawnActor(FVector Pos = {}, FRotator Rot = {}, FVector Size = { 1, 1, 1 })
+    {
+        return SpawnActor<T>(T::StaticClass(), Pos, Rot, Size);
     }
 
     template <typename T>
