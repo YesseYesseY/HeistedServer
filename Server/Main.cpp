@@ -7,8 +7,11 @@
 #define JustLoadMeIntoAsteriaIWantToDumpAnSDK 0
 
 #include <SDK/FortniteGame_classes.hpp>
+#include <SDK/LagerRuntime_classes.hpp>
+#include <SDK/GameplayTags_classes.hpp>
 using namespace SDK;
 
+#include <Frame.hpp>
 #include <Hook.hpp>
 #include <Utils.hpp>
 #include <Memcury.hpp>
@@ -16,10 +19,10 @@ using namespace SDK;
 #include "Net.hpp"
 #include "Abilities.hpp"
 #include "Inventory.hpp"
+#include "Vehicles.hpp"
 #include "GameMode.hpp"
 #include "Player.hpp"
 #include "Building.hpp"
-#include "Vehicles.hpp"
 
 DWORD MainThread(HMODULE Module)
 {
@@ -45,7 +48,6 @@ DWORD MainThread(HMODULE Module)
     Abilities::Init();
     Inventory::Init();
     Building::Init();
-    Vehicles::Init();
 
     Utils::ExecuteConsoleCommand(L"log LogFortUIDirector None");
     Utils::ExecuteConsoleCommand(L"log LogAbilitySystem VeryVerbose");

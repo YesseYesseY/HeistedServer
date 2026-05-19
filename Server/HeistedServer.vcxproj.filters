@@ -36,6 +36,9 @@
     <ClCompile Include="..\SDK\SDK\GameplayAbilities_functions.cpp">
       <Filter>..\SDK\SDK</Filter>
     </ClCompile>
+    <ClCompile Include="..\SDK\SDK\GameplayTags_functions.cpp">
+      <Filter>..\SDK\SDK</Filter>
+    </ClCompile>
     <ClCompile Include="..\minhook\src\buffer.c">
       <Filter>..\minhook\src</Filter>
     </ClCompile>

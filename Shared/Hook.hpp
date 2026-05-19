@@ -27,6 +27,38 @@ namespace Hook
         VTable((void**)T::GetDefaultObj()->VTable, Index, Hook, Original);
     }
 
+    template <typename T, typename T2 = void*>
+    void AllVTables(int32 Index, void* Hook, T2* Original = nullptr)
+    {
+        for (int i = 0; i < UObject::GObjects->Num(); i++)
+        {
+            auto Object = UObject::GObjects->GetByIndex(i);
+            if (!Object || !Object->HasTypeFlag(EClassCastFlags::Class)) continue;
+
+            if (((UClass*)Object)->IsSubclassOf(T::StaticClass()))
+            {
+                Hook::VTable((void**)((UClass*)Object)->DefaultObject->VTable, Index, Hook, Original);
+            }
+        }
+    }
+
+    template <typename T = void*>
+    void UFunc(UFunction* Func, void* Hook, T* Original = nullptr)
+    {
+        if (Original)
+            *Original = *(T*)(int64(Func) + 0xD8);
+
+        *(void**)(int64(Func) + 0xD8) = Hook;
+    }
+
+    template <typename T = void*>
+    void UFunc(const std::string& FuncName, void* Hook, T* Original = nullptr)
+    {
+        auto Func = UObject::FindObject<UFunction>(FuncName, EClassCastFlags::Function);
+        if (Func)
+            UFunc(Func, Hook, Original);
+    }
+
     bool ReturnTrueHook()
     {
         return true;

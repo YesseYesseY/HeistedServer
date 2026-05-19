@@ -25,6 +25,14 @@ bool UWorldExecHook(UWorld* World, int64 a2, const wchar_t* Cmd, int64 a4)
     return UWorldExecOriginal(World, a2, Cmd, a4);
 }
 
+void (*CallServerMoveOriginal)(AFortPhysicsPawn* Pawn, FReplicatedPhysicsPawnState* InState);
+void CallServerMove(AFortPhysicsPawn* Pawn, FReplicatedPhysicsPawnState* InState)
+{
+    InState->Rotation = Pawn->GetTransform().Rotation;
+
+    CallServerMoveOriginal(Pawn, InState);
+}
+
 // void crashit()
 // {
 //     ((AFortPickup*)UWorld::GetWorld())->TossPickup({}, (AFortPawn*)UWorld::GetWorld(), INT32_MAX, true, UINT8_MAX, UINT8_MAX);
@@ -42,6 +50,7 @@ DWORD MainThread(HMODULE Module)
     auto ImageBase = InSDKUtils::GetImageBase();
     Hook::Function(ImageBase + 0x31E946C, Hook::ReturnHook); // RequestExit
     Hook::Function(ImageBase + 0x26F10E0, UWorldExecHook, &UWorldExecOriginal); // UWorld::Exec
+    Hook::Function(ImageBase + 0x87E38EC, CallServerMove, &CallServerMoveOriginal);
 
     auto Engine = UEngine::GetEngine();
     auto GameViewport = Engine->GameViewport;

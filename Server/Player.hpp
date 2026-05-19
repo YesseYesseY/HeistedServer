@@ -25,6 +25,14 @@ namespace Player
         {
             // Nope :(
         }
+        else if (Msg == L"spawnrock")
+        {
+            static auto VID = UObject::FindObject<UFortVehicleItemDefinition>("FortVehicleItemDefinition VID_Rock_Vehicle_BR.VID_Rock_Vehicle_BR");
+            static auto VehicleClass = Utils::GetSoftPtr(VID->VehicleActorClass);
+            auto Pos = Controller->Pawn->K2_GetActorLocation();
+            Pos.Z += 500.0f;
+            Utils::SpawnActor(VehicleClass, Pos);
+        }
     }
 
     void Init()

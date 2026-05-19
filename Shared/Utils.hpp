@@ -1,15 +1,21 @@
 namespace Utils
 {
     template <typename T = AActor>
-    T* SpawnActor(UClass* ActorClass, FVector Pos = {}, FRotator Rot = {}, FVector Size = { 1, 1, 1 })
+    T* SpawnActor(UClass* ActorClass, FTransform translivesmatter)
     {
-        FTransform translivesmatter = UKismetMathLibrary::MakeTransform(Pos, Rot, Size);
         auto Ret = UGameplayStatics::BeginDeferredActorSpawnFromClass(UWorld::GetWorld(), ActorClass, translivesmatter, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn, nullptr, ESpawnActorScaleMethod::MultiplyWithRoot);
 
         if (Ret)
             Ret = UGameplayStatics::FinishSpawningActor(Ret, translivesmatter, ESpawnActorScaleMethod::MultiplyWithRoot);
 
         return (T*)Ret;
+    }
+
+    template <typename T = AActor>
+    T* SpawnActor(UClass* ActorClass, FVector Pos = {}, FRotator Rot = {}, FVector Size = { 1, 1, 1 })
+    {
+        FTransform translivesmatter = UKismetMathLibrary::MakeTransform(Pos, Rot, Size);
+        return SpawnActor<T>(ActorClass, translivesmatter);
     }
 
     template <typename T>
@@ -138,6 +144,20 @@ namespace Utils
             return Obj;
 
         return nullptr;
+    }
+
+    FGameplayTag MakeGameplayTag(const wchar_t* Tag)
+    {
+        return { UKismetStringLibrary::Conv_StringToName(Tag) };
+    }
+
+    template <typename T>
+    TArray<T*> GetAllActorsOfClass()
+    {
+        TArray<AActor*> Ret;
+        UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), T::StaticClass(), &Ret);
+
+        return *(TArray<T*>*)&Ret;
     }
 }
 

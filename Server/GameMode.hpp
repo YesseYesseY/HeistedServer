@@ -36,6 +36,7 @@ namespace GameMode
 
         if (GameMode->NumPlayers > 0)
         {
+            Vehicles::Init();
             GameMode->bWorldIsReady = true;
 
             return true;
