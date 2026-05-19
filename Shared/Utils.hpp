@@ -117,6 +117,12 @@ namespace Utils
         return ObjectItem->Object;
     }
 
+    void SetWeakPtr(FWeakObjectPtr& WeakPtr, UObject* Obj)
+    {
+        WeakPtr.ObjectIndex = Obj->Index;
+        WeakPtr.ObjectSerialNumber = GetSerialNumber(GetUObjectItemByIndex(Obj->Index));
+    }
+
     template <typename T>
     T* GetWeakPtr(TWeakObjectPtr<T>& WeakPtr)
     {
@@ -158,6 +164,23 @@ namespace Utils
         UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), T::StaticClass(), &Ret);
 
         return *(TArray<T*>*)&Ret;
+    }
+
+    template <typename T>
+    T* FindObjectFast(const std::string& Name, EClassCastFlags RequiredType = EClassCastFlags::None)
+    {
+        for (int i = 0; i < UObject::GObjects->Num(); ++i)
+        {
+            UObject* Object = UObject::GObjects->GetByIndex(i);
+        
+            if (!Object || Object->HasTypeFlag(EClassCastFlags::Package))
+                continue;
+            
+            if (Object->HasTypeFlag(RequiredType) && Object->GetName() == Name)
+                return (T*)Object;
+        }
+
+        return nullptr;
     }
 }
 

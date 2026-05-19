@@ -1,3 +1,5 @@
+#include "Patches.hpp"
+
 namespace Net
 {
     bool (*InitHost)(UObject*);
@@ -138,12 +140,23 @@ namespace Net
         //       The next one is "if (DemoNetDriver && ...)" which will always be false, and because of that it goes to the last step
         //       Calling AttemptDeriveFromURL and returns that, so that function is all that need to be hooked instead of going around all the assembly scanning for 3s.
         //       This works for 99% of the GetNetMode calls, the rest of them i just did manually
+        constexpr bool ScanForPatches = false;
+        
+        if constexpr (!ScanForPatches)
+        {
+            ApplyPatches();
+        }
+        else
         {
             const auto sizeOfImage = Memcury::PE::GetNTHeaders()->OptionalHeader.SizeOfImage;
             const auto scanBytes = reinterpret_cast<std::uint8_t*>(Memcury::PE::GetModuleBase());
 
             auto ADFU = (uintptr_t)(ImageBase + 0x1D7D9E8);
 
+            std::ofstream patch74("patch74.txt");
+            std::ofstream patch75("patch75.txt");
+            std::ofstream patch84("patch84.txt");
+            std::ofstream patch85("patch85.txt");
             for (auto i = 0ul; i < sizeOfImage - 1; ++i)
             {
                 if (scanBytes[i] == 0xE8)
@@ -175,6 +188,7 @@ meow:
                                 VirtualProtect((LPVOID)(PatchAddr + 1), 1, PAGE_EXECUTE_READWRITE, &yes);
                                 *(uint8*)(PatchAddr + 1) = 0x84;
                                 VirtualProtect((LPVOID)(PatchAddr + 1), 1, yes, &yes);
+                                patch84 << std::format("0x{:X}, ", PatchAddr - ImageBase + 1);
                             }
                             else if (*(uint8*)(PatchAddr + 1) == 0x84)
                             {
@@ -182,6 +196,7 @@ meow:
                                 VirtualProtect((LPVOID)(PatchAddr + 1), 1, PAGE_EXECUTE_READWRITE, &yes);
                                 *(uint8*)(PatchAddr + 1) = 0x85;
                                 VirtualProtect((LPVOID)(PatchAddr + 1), 1, yes, &yes);
+                                patch85 << std::format("0x{:X}, ", PatchAddr - ImageBase + 1);
                             }
                         }
                         else if (*(uint8*)(PatchAddr) == 0x74)
@@ -190,6 +205,7 @@ meow:
                             VirtualProtect((LPVOID)PatchAddr, 1, PAGE_EXECUTE_READWRITE, &yes);
                             *(uint8*)(PatchAddr) = 0x75;
                             VirtualProtect((LPVOID)PatchAddr, 1, yes, &yes);
+                            patch75 << std::format("0x{:X}, ", PatchAddr - ImageBase);
                         }
                         else if (*(uint8*)(PatchAddr) == 0x75)
                         {
@@ -199,44 +215,16 @@ meow:
                                 VirtualProtect((LPVOID)PatchAddr, 1, PAGE_EXECUTE_READWRITE, &yes);
                                 *(uint8*)(PatchAddr) = 0x74;
                                 VirtualProtect((LPVOID)PatchAddr, 1, yes, &yes);
+                                patch74 << std::format("0x{:X}, ", PatchAddr - ImageBase);
                             }
                         }
                     }
                 }
             }
+            patch74.close();
+            patch75.close();
+            patch84.close();
+            patch85.close();
         }
-
-#define PATCH_BYTE(Offset, Val) \
-        { \
-        auto Addr = (LPVOID)(ImageBase + Offset); \
-        DWORD yes; \
-        VirtualProtect(Addr, 1, PAGE_EXECUTE_READWRITE, &yes); \
-        *(uint8*)(Addr) = Val; \
-        VirtualProtect(Addr, 1, yes, &yes); \
-        }
-
-        PATCH_BYTE(0x141003ABE - 0x140000000,     0x74);
-        PATCH_BYTE(0x141314E96 - 0x140000000,     0x74);
-        // PATCH_BYTE(0x141830C32 - 0x140000000,     0x74);
-        PATCH_BYTE(0x142E7B684 - 0x140000000,     0x74);
-        PATCH_BYTE(0x142FC1FB0 - 0x140000000,     0x74);
-        PATCH_BYTE(0x1431BE345 - 0x140000000,     0x74);
-        PATCH_BYTE(0x143856BFC - 0x140000000,     0x74);
-        PATCH_BYTE(0x14386A08C - 0x140000000,     0x74);
-        PATCH_BYTE(0x1449DD098 - 0x140000000 + 1, 0x84);
-        PATCH_BYTE(0x1449F544D - 0x140000000,     0x75);
-        PATCH_BYTE(0x144A1A3AC - 0x140000000 + 1, 0x84);
-        PATCH_BYTE(0x146074029 - 0x140000000,     0x75);
-        PATCH_BYTE(0x146C0E72A - 0x140000000,     0x74);
-        PATCH_BYTE(0x1474F7D96 - 0x140000000,     0x75);
-        PATCH_BYTE(0x1499B689E - 0x140000000 + 1, 0x84);
-        PATCH_BYTE(0x149E91404 - 0x140000000 + 1, 0x84);
-        PATCH_BYTE(0x141DCCE84 - 0x140000000 + 1, 0x85);
-        PATCH_BYTE(0x1420CE311 - 0x140000000 + 1, 0x85);
-        PATCH_BYTE(0x14227B434 - 0x140000000 + 1, 0x85);
-        PATCH_BYTE(0x1422B6586 - 0x140000000 + 1, 0x85);
-        // PATCH_BYTE(0x143818221 - 0x140000000 + 1, 0x85);
-        PATCH_BYTE(0x146C0F91B - 0x140000000,     0x75);
-        PATCH_BYTE(0x14381825E - 0x140000000 + 3, 0x00); // FIXES PICKAXE
     }
 }

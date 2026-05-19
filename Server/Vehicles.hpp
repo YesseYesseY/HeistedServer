@@ -16,7 +16,7 @@ namespace Vehicles
     void Init()
     {
         // TODO Don't do this. Do it through GameFeatures
-#define FV(obj) UObject::FindObject<UFortVehicleItemDefinition>("FortVehicleItemDefinition " obj "." obj)
+#define FV(obj) Utils::FindObjectFast<UFortVehicleItemDefinition>(obj)
 #define VTB(tag, obj) { Utils::MakeGameplayTag(TEXT(tag)), { FV(obj) } },
 #define VTS(tag) { Utils::MakeGameplayTag(TEXT(tag)), { 
 #define VTE()  } },

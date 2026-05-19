@@ -36,6 +36,7 @@ namespace GameMode
 
         if (GameMode->NumPlayers > 0)
         {
+            GameFeatures::Init();
             Vehicles::Init();
             GameMode->bWorldIsReady = true;
 
@@ -69,8 +70,8 @@ namespace GameMode
         auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
         auto ASC = PlayerState->AbilitySystemComponent;
 
-        static auto PlayerAbilitySet = UObject::FindObject<UFortAbilitySet>("FortAbilitySet GAS_AthenaPlayer.GAS_AthenaPlayer");
-        static auto TacSprintAbilitySet = UObject::FindObject<UFortAbilitySet>("FortAbilitySet AS_TacticalSprint.AS_TacticalSprint");
+        static auto PlayerAbilitySet = Utils::FindObjectFast<UFortAbilitySet>("GAS_AthenaPlayer");
+        static auto TacSprintAbilitySet = Utils::FindObjectFast<UFortAbilitySet>("AS_TacticalSprint");
         Abilities::GiveAbilitySet(PlayerState->AbilitySystemComponent, PlayerAbilitySet);
         Abilities::GiveAbilitySet(PlayerState->AbilitySystemComponent, TacSprintAbilitySet);
 
@@ -80,11 +81,11 @@ namespace GameMode
         for (int i = 0; i < 5; i++) // 5 = The 4 main builds + EditTool, after 5 there is just smartbuilds
             Inventory::GiveItem(PlayerController, GameMode->StartingItems[i].Item, GameMode->StartingItems[i].Count);
 
-        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortWeaponMeleeItemDefinition WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01"));
-        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortResourceItemDefinition WoodItemData.WoodItemData"));
-        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortResourceItemDefinition StoneItemData.StoneItemData"));
-        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortResourceItemDefinition MetalItemData.MetalItemData"));
-        Inventory::GiveItem(PlayerController, UObject::FindObject<UFortItemDefinition>("FortWeaponMeleeItemDefinition WID_Melee_Katana_R.WID_Melee_Katana_R"));
+        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_Harvest_Pickaxe_Athena_C_T01"));
+        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WoodItemData"));
+        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("StoneItemData"));
+        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("MetalItemData"));
+        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_Melee_Katana_R"));
     }
 
     void Init()

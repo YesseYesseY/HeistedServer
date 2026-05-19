@@ -19,6 +19,7 @@ using namespace SDK;
 #include "Net.hpp"
 #include "Abilities.hpp"
 #include "Inventory.hpp"
+#include "GameFeatures.hpp"
 #include "Vehicles.hpp"
 #include "GameMode.hpp"
 #include "Player.hpp"
