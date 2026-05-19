@@ -27,8 +27,44 @@ namespace Building
         Existing.Free();
     }
 
+    void ServerBeginEditingBuildingActor(AFortPlayerController* PlayerController, ABuildingSMActor* BuildingActorToEdit)
+    {
+        BuildingActorToEdit->EditingPlayer = (AFortPlayerStateAthena*)PlayerController->PlayerState;
+        BuildingActorToEdit->OnRep_EditingPlayer();
+
+        static auto EditToolItemDef = UObject::FindObject<UFortEditToolItemDefinition>("FortEditToolItemDefinition EditTool.EditTool");
+        if (auto ItemEntry = Inventory::FindItemEntry(PlayerController, EditToolItemDef))
+        {
+            BuildingActorToEdit->EditingPlayer = (AFortPlayerStateAthena*)PlayerController->PlayerState;
+            BuildingActorToEdit->OnRep_EditingPlayer();
+
+            Inventory::EquipItemEntry(PlayerController, ItemEntry);
+        }
+        else
+        {
+            PlayerController->ClientFailedToBeginEditingBuildingActor(BuildingActorToEdit);
+        }
+    }
+
+    void ServerEndEditingBuildingActor(AFortPlayerController* PlayerController, ABuildingSMActor* BuildingActorToStopEditing)
+    {
+        BuildingActorToStopEditing->EditingPlayer = nullptr;
+        BuildingActorToStopEditing->OnRep_EditingPlayer();
+    }
+
+    void ServerEditBuildingActor(AFortPlayerController* PlayerController, ABuildingSMActor* BuildingActorToEdit, UClass* NewBuildingClass, uint8 RotationIterations, bool bMirrored)
+    {
+        static ABuildingSMActor* (*RBA)(ABuildingSMActor*, uint8, UClass*, int, int, bool, AFortPlayerController*) = decltype(RBA)(InSDKUtils::GetImageBase() + 0x7CAF9AC);
+        RBA(BuildingActorToEdit, 1, NewBuildingClass, 0, RotationIterations, bMirrored, PlayerController);
+    }
+
     void Init()
     {
         Hook::VTable<AFortPlayerControllerAthena>(4712 / 8, ServerCreateBuildingActor);
+        Hook::VTable<AFortPlayerControllerAthena>(4728 / 8, ServerEditBuildingActor);
+        Hook::VTable<AFortPlayerControllerAthena>(4752 / 8, ServerEndEditingBuildingActor);
+        Hook::VTable<AFortPlayerControllerAthena>(4768 / 8, ServerBeginEditingBuildingActor);
+
+        // "FortEditToolItemDefinition EditTool.EditTool"
     }
 }

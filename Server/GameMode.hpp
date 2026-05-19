@@ -68,12 +68,11 @@ namespace GameMode
         auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
         auto ASC = PlayerState->AbilitySystemComponent;
 
-        auto AbilitySet = UObject::FindObject<UFortAbilitySet>("FortAbilitySet GAS_AthenaPlayer.GAS_AthenaPlayer");
-        for (auto Ability : AbilitySet->GameplayAbilities)
-        {
-            ASC->K2_GiveAbility(Ability, 1, 1);
-        }
-        ASC->K2_GiveAbility(UObject::FindClassFast("GA_Athena_TacticalSprint_C"), 1, 1);
+        static auto PlayerAbilitySet = UObject::FindObject<UFortAbilitySet>("FortAbilitySet GAS_AthenaPlayer.GAS_AthenaPlayer");
+        static auto TacSprintAbilitySet = UObject::FindObject<UFortAbilitySet>("FortAbilitySet AS_TacticalSprint.AS_TacticalSprint");
+        Abilities::GiveAbilitySet(PlayerState->AbilitySystemComponent, PlayerAbilitySet);
+        Abilities::GiveAbilitySet(PlayerState->AbilitySystemComponent, TacSprintAbilitySet);
+
         // TODO Look into this not working
         // ASC->K2_GiveAbility(UObject::FindClassFast("GA_Athena_Player_DoorBash_C"), 1, 1);
 

@@ -193,7 +193,7 @@ meow:
                         }
                         else if (*(uint8*)(PatchAddr) == 0x75)
                         {
-                            if (PatchAddr != 0x143818215)
+                            if (PatchAddr - InSDKUtils::GetImageBase() != 0x3818215 /*0x143818215*/)
                             {
                                 DWORD yes;
                                 VirtualProtect((LPVOID)PatchAddr, 1, PAGE_EXECUTE_READWRITE, &yes);

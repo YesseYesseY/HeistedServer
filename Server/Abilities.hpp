@@ -51,6 +51,15 @@ namespace Abilities
         }
     }
 
+    void GiveAbilitySet(UAbilitySystemComponent* ASC, UFortAbilitySet* AbilitySet)
+    {
+        for (auto Ability : AbilitySet->GameplayAbilities)
+            ASC->K2_GiveAbility(Ability, 1, 1);
+
+        for (auto Effect : AbilitySet->GrantedGameplayEffects)
+            ASC->BP_ApplyGameplayEffectToSelf(Effect.GameplayEffect, Effect.Level, {});
+    }
+
     void Init()
     {
         InternalTryActivateAbility = decltype(InternalTryActivateAbility)(InSDKUtils::GetImageBase() + 0x68e7084);

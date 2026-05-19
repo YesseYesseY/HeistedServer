@@ -78,5 +78,66 @@ namespace Utils
         outfile.close();
         outfile2.close();
     }
+
+    int32 GetSerialNumber(FUObjectItem* ObjectItem)
+    {
+        return *(int32*)(int64(ObjectItem) + 16);
+    }
+
+    FUObjectItem* GetUObjectItemByIndex(int32 Index)
+    {
+        auto& ObjectArr = UObject::GObjects;
+        const int32 ChunkIndex = Index / ObjectArr->ElementsPerChunk;
+        const int32 InChunkIdx = Index % ObjectArr->ElementsPerChunk;
+        
+        if (Index < 0 || ChunkIndex >= ObjectArr->NumChunks || Index >= ObjectArr->NumElements)
+            return nullptr;
+        
+        FUObjectItem* ChunkPtr = ObjectArr->GetDecrytedObjPtr()[ChunkIndex];
+        if (!ChunkPtr) return nullptr;
+        
+        return &ChunkPtr[InChunkIdx];
+    }
+
+    UObject* GetWeakPtr(FWeakObjectPtr& WeakPtr)
+    {
+        if (WeakPtr.ObjectSerialNumber == 0 || WeakPtr.ObjectIndex < 0)
+            return nullptr;
+
+        auto ObjectItem = GetUObjectItemByIndex(WeakPtr.ObjectIndex);
+        if (!ObjectItem || GetSerialNumber(ObjectItem) != WeakPtr.ObjectSerialNumber)
+            return nullptr;
+
+        return ObjectItem->Object;
+    }
+
+    template <typename T>
+    T* GetWeakPtr(TWeakObjectPtr<T>& WeakPtr)
+    {
+        return (T*)GetWeakPtr(WeakPtr);
+    }
+
+    template <typename T>
+    T* GetSoftPtr(TSoftObjectPtr<T>& SoftPtr)
+    {
+        if (auto WeakObj = GetWeakPtr(SoftPtr.WeakPtr))
+            return WeakObj;
+
+        if (auto Obj = (T*)UKismetSystemLibrary::LoadAsset_Blocking(SoftPtr))
+            return Obj;
+
+        return nullptr;
+    }
+
+    UClass* GetSoftPtr(TSoftClassPtr<UClass>& SoftPtr)
+    {
+        if (auto WeakObj = (UClass*)GetWeakPtr(SoftPtr.WeakPtr))
+            return WeakObj;
+
+        if (auto Obj = UKismetSystemLibrary::LoadClassAsset_Blocking(SoftPtr))
+            return Obj;
+
+        return nullptr;
+    }
 }
 

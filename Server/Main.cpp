@@ -14,11 +14,12 @@ using namespace SDK;
 #include <Memcury.hpp>
 
 #include "Net.hpp"
+#include "Abilities.hpp"
 #include "Inventory.hpp"
 #include "GameMode.hpp"
 #include "Player.hpp"
-#include "Abilities.hpp"
 #include "Building.hpp"
+#include "Vehicles.hpp"
 
 DWORD MainThread(HMODULE Module)
 {
@@ -44,6 +45,7 @@ DWORD MainThread(HMODULE Module)
     Abilities::Init();
     Inventory::Init();
     Building::Init();
+    Vehicles::Init();
 
     Utils::ExecuteConsoleCommand(L"log LogFortUIDirector None");
     Utils::ExecuteConsoleCommand(L"log LogAbilitySystem VeryVerbose");

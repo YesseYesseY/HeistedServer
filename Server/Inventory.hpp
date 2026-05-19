@@ -11,6 +11,17 @@ namespace Inventory
         return nullptr;
     }
 
+    FFortItemEntry* FindItemEntry(AFortPlayerController* PlayerController, UFortItemDefinition* ItemDef)
+    {
+        for (auto& ItemEntry : PlayerController->WorldInventory->Inventory.ReplicatedEntries)
+        {
+            if (ItemEntry.ItemDefinition == ItemDef)
+                return &ItemEntry;
+        }
+
+        return nullptr;
+    }
+
     void Update(AFortPlayerController* PlayerController)
     {
         PlayerController->WorldInventory->HandleInventoryLocalUpdate();
