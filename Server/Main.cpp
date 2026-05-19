@@ -50,6 +50,8 @@ DWORD MainThread(HMODULE Module)
     Inventory::Init();
     Building::Init();
 
+    Utils::FindObjectFast<UCurieGlobals>("Default__CurieGlobals")->bEnableCurie = false;
+
     Utils::ExecuteConsoleCommand(L"log LogFortUIDirector None");
     Utils::ExecuteConsoleCommand(L"log LogAbilitySystem VeryVerbose");
     Utils::ExecuteConsoleCommand(L"open Asteria_Terrain");

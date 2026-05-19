@@ -86,6 +86,8 @@ namespace GameMode
         Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("StoneItemData"));
         Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("MetalItemData"));
         Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_Melee_Katana_R"));
+        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_GrenadeLauncher_Hopscotch_Athena_SR"));
+        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("AmmoDataRockets"));
     }
 
     void Init()

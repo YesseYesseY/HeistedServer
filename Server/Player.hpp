@@ -15,7 +15,8 @@ namespace Player
         }
         else if (Msg == L"test")
         {
-            MsgBox("{} {}", UKismetSystemLibrary::IsServer(UWorld::GetWorld()), UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
+            // MsgBox("{} {}", UKismetSystemLibrary::IsServer(UWorld::GetWorld()), UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
+            MsgBox("{}", UFortCurieBlueprintFunctionLibrary::IsCurieEnabled());
         }
         else if (Msg == L"dumpobjects")
         {
