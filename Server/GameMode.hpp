@@ -4,8 +4,8 @@ namespace GameMode
 {
     bool ReadyToStartMatchHook(AFortGameModeBR* GameMode)
     {
-        // if (UFortKismetLibrary::GetNumActorsOfClass(UWorld::GetWorld(), AFortPlayerStartWarmup::StaticClass()))
-        //     return false;
+        if (UFortKismetLibrary::GetNumActorsOfClass(UWorld::GetWorld(), AFortPlayerStartWarmup::StaticClass()))
+            return false;
 
         static bool Started = false;
         if (!Started)
@@ -72,8 +72,11 @@ namespace GameMode
 
         static auto PlayerAbilitySet = Utils::FindObjectFast<UFortAbilitySet>("GAS_AthenaPlayer");
         static auto TacSprintAbilitySet = Utils::FindObjectFast<UFortAbilitySet>("AS_TacticalSprint");
+        // static auto AscenderAbilitySet = Utils::FindObjectFast<UFortAbilitySet>("AS_Ascender");
+
         Abilities::GiveAbilitySet(PlayerState->AbilitySystemComponent, PlayerAbilitySet);
         Abilities::GiveAbilitySet(PlayerState->AbilitySystemComponent, TacSprintAbilitySet);
+        // Abilities::GiveAbilitySet(PlayerState->AbilitySystemComponent, AscenderAbilitySet);
 
         // TODO Look into this not working
         // ASC->K2_GiveAbility(UObject::FindClassFast("GA_Athena_Player_DoorBash_C"), 1, 1);

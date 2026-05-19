@@ -64,6 +64,6 @@ namespace Abilities
     {
         InternalTryActivateAbility = decltype(InternalTryActivateAbility)(InSDKUtils::GetImageBase() + 0x68e7084);
 
-        Hook::VTable<UFortAbilitySystemComponentAthena>(2224 / 8, InternalServerTryActivateAbility);
+        Hook::AllVTables<UAbilitySystemComponent>(2224 / 8, InternalServerTryActivateAbility);
     }
 }

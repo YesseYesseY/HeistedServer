@@ -13,10 +13,16 @@ namespace Player
         {
             Utils::ExecuteConsoleCommand(Msg.substr(7).c_str());
         }
+        else if (Msg.starts_with(L"client "))
+        {
+            if (!Controller->CheatManager)
+                Controller->CheatManager = Utils::SpawnObject<UCheatManager>(Controller);
+            Utils::ExecuteConsoleCommand(Msg.substr(7).c_str(), Controller);
+        }
         else if (Msg == L"test")
         {
-            // MsgBox("{} {}", UKismetSystemLibrary::IsServer(UWorld::GetWorld()), UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
-            MsgBox("{}", UFortCurieBlueprintFunctionLibrary::IsCurieEnabled());
+            MsgBox("{} {}", UKismetSystemLibrary::IsServer(UWorld::GetWorld()), UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
+            // MsgBox("{}", UFortCurieBlueprintFunctionLibrary::IsCurieEnabled());
         }
         else if (Msg == L"dumpobjects")
         {
@@ -28,7 +34,7 @@ namespace Player
         }
         else if (Msg == L"spawnrock")
         {
-            static auto VID = UObject::FindObject<UFortVehicleItemDefinition>("FortVehicleItemDefinition VID_Rock_Vehicle_BR.VID_Rock_Vehicle_BR");
+            static auto VID = Utils::FindObjectFast<UFortVehicleItemDefinition>("VID_Rock_Vehicle_BR");
             static auto VehicleClass = Utils::GetSoftPtr(VID->VehicleActorClass);
             auto Pos = Controller->Pawn->K2_GetActorLocation();
             Pos.Z += 500.0f;

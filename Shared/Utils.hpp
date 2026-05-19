@@ -30,9 +30,9 @@ namespace Utils
         return (T*)UGameplayStatics::SpawnObject(T::StaticClass(), Outer);
     }
 
-    void ExecuteConsoleCommand(const wchar_t* Cmd)
+    void ExecuteConsoleCommand(const wchar_t* Cmd, APlayerController* PlayerController = nullptr)
     {
-        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), Cmd, nullptr);
+        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), Cmd, PlayerController);
     }
 
     void MarkArrayDirty(FFastArraySerializer& Arr)
@@ -184,3 +184,11 @@ namespace Utils
     }
 }
 
+template<>
+struct std::hash<FName>
+{
+    std::size_t operator()(const FName& name) const noexcept
+    {
+        return std::hash<uint32_t>{}(*(uint32_t*)this);
+    }
+};
