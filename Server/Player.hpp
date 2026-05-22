@@ -64,11 +64,41 @@ namespace Player
             DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>("Asteria_DL_TM_02"));
             // There is Asteria_DL_TM_03 but that's just Asteria_DL_TM_02 but without the props and time machine
         }
+        else if (Msg == L"tpalltome")
+        {
+            auto Pos = Controller->Pawn->K2_GetActorLocation();
+            auto Rot = Controller->GetControlRotation();
+            for (auto Player : UWorld::GetWorld()->NetDriver->ClientConnections)
+            {
+                Player->PlayerController->Pawn->K2_TeleportTo(Pos, Rot);
+            }
+        }
+    }
+
+    void GetPlayerViewPoint(APlayerController* PlayerController, FVector* Location, FRotator* Rotation)
+    {
+        static FName NAME_Spectating = UKismetStringLibrary::Conv_StringToName(L"Spectating");
+        if (PlayerController->StateName == NAME_Spectating)
+        {
+            *Location = PlayerController->LastSpectatorSyncLocation;
+            *Rotation = PlayerController->LastSpectatorSyncRotation;
+        }
+        else if (PlayerController->Pawn)
+        {
+            *Location = PlayerController->Pawn->K2_GetActorLocation();
+            *Rotation = PlayerController->GetControlRotation();
+        }
+        else
+        {
+            *Location = PlayerController->K2_GetActorLocation();
+            *Rotation = PlayerController->K2_GetActorRotation();
+        }
     }
 
     void Init()
     {
         Hook::VTable<AFortPlayerControllerAthena>(2440 / 8, ServerAcknowledgePossession);
         Hook::VTable<AFortPlayerControllerAthena>(4024 / 8, ServerCheat);
+        Hook::AllVTables<APlayerController>(2032 / 8, GetPlayerViewPoint);
     }
 }
