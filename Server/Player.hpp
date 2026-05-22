@@ -32,13 +32,37 @@ namespace Player
         {
             // Nope :(
         }
-        else if (Msg == L"spawnrock")
+        else if (Msg == L"spawnrockbr")
         {
             static auto VID = Utils::FindObjectFast<UFortVehicleItemDefinition>("VID_Rock_Vehicle_BR");
             static auto VehicleClass = Utils::GetSoftPtr(VID->VehicleActorClass);
             auto Pos = Controller->Pawn->K2_GetActorLocation();
             Pos.Z += 500.0f;
             Utils::SpawnActor(VehicleClass, Pos);
+        }
+        else if (Msg == L"spawnrock")
+        {
+            static auto VID = Utils::FindObjectFast<UFortVehicleItemDefinition>("VID_Rock_Vehicle");
+            static auto VehicleClass = Utils::GetSoftPtr(VID->VehicleActorClass);
+            auto Pos = Controller->Pawn->K2_GetActorLocation();
+            Pos.Z += 500.0f;
+            Utils::SpawnActor(VehicleClass, Pos);
+        }
+        else if (Msg == L"dl")
+        {
+            DataLayers::Dump();
+        }
+        else if (Msg == L"og")
+        {
+            // Mega City Signs
+            DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>("Asteria_DL_RTSign_Active"));
+            DataLayers::Deactivate(Utils::FindObjectFast<UDataLayerAsset>("Asteria_DL_RTSign_DeActivated"));
+
+            // Remove the time machine from kado thornes basement
+            DataLayers::Deactivate(Utils::FindObjectFast<UDataLayerAsset>("Asteria_DL_TM_01"));
+            // Put the time machine in frenzy field with chapter 1 props
+            DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>("Asteria_DL_TM_02"));
+            // There is Asteria_DL_TM_03 but that's just Asteria_DL_TM_02 but without the props and time machine
         }
     }
 

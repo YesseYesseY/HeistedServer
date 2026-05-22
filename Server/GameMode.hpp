@@ -38,6 +38,20 @@ namespace GameMode
         {
             GameFeatures::Init();
             Vehicles::Init();
+
+            // Put time machine in kado thornes basement
+            DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>("Asteria_DL_TM_01"));
+
+            int32 RTs[3] = { 1, 1, 1 };
+            RTs[0] = UKismetMathLibrary::RandomIntegerInRange(1, 6);
+            while (RTs[1] == RTs[0])
+                RTs[1] = UKismetMathLibrary::RandomIntegerInRange(1, 6);
+            while (RTs[2] == RTs[0] || RTs[2] == RTs[1])
+                RTs[1] = UKismetMathLibrary::RandomIntegerInRange(1, 6);
+
+            for (int i = 0; i < 3; i++)
+                DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>(std::format("Asteria_DL_RT_{}", RTs[i])));
+
             GameMode->bWorldIsReady = true;
 
             return true;

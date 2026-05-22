@@ -182,6 +182,23 @@ namespace Utils
 
         return nullptr;
     }
+
+    template <typename T>
+    T* FindFirstObjectOfClass(UClass* Class = T::StaticClass())
+    {
+        for (int i = 0; i < UObject::GObjects->Num(); ++i)
+        {
+            UObject* Object = UObject::GObjects->GetByIndex(i);
+
+            if (!Object || Object->IsDefaultObject())
+                continue;
+
+            if (Object->IsA(Class))
+                return (T*)Object;
+        }
+
+        return nullptr;
+    }
 }
 
 template<>
