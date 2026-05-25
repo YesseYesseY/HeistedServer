@@ -9,6 +9,7 @@
 #include <SDK/FortniteGame_classes.hpp>
 #include <SDK/LagerRuntime_classes.hpp>
 #include <SDK/GameplayTags_classes.hpp>
+#include <SDK/SafeZoneIndicator_classes.hpp>
 using namespace SDK;
 
 #include <Frame.hpp>

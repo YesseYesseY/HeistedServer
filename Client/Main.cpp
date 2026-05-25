@@ -14,7 +14,7 @@ bool UWorldExecHook(UWorld* World, int64 a2, const wchar_t* Cmd, int64 a4)
     if (wcscmp(Cmd, L"givemecheats") == 0)
     {
         auto PlayerController = World->OwningGameInstance->LocalPlayers[0]->PlayerController;
-        PlayerController->CheatManager = (UCheatManager*)UGameplayStatics::SpawnObject(UCheatManager::StaticClass(), PlayerController);
+        PlayerController->CheatManager = (UFortCheatManager*)UGameplayStatics::SpawnObject(UFortCheatManager::StaticClass(), PlayerController);
         return true;
     }
     else if (wcscmp(Cmd, L"dumpobjects") == 0)

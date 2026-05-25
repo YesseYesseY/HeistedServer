@@ -113,6 +113,8 @@ namespace Vehicles
 
     void Init()
     {
+        FGameplayTag AlwaysSpawnTag = { UKismetStringLibrary::Conv_StringToName(L"Athena.Vehicle.SpawnLocation.AlwaysSpawn") };
+
         auto Spawners = Utils::GetAllActorsOfClass<AFortAthenaLivingWorldVehiclePointProvider>();
         for (auto Spawner : Spawners)
         {
@@ -142,11 +144,19 @@ namespace Vehicles
             if (!VehicleClass)
                 continue;
 
-            // TODO Multiple SpawnPoints? Maybe?
-            //      SpawnChance
-            FTransform translivesmatter = UKismetMathLibrary::ComposeTransforms(Spawner->GetTransform(), Spawner->SpawnPoints[0]);;
-            Utils::SpawnActor(VehicleClass, translivesmatter);
+            float SpawnChance = 0.0f;
+            if (UBlueprintGameplayTagLibrary::HasTag(Spawner->FiltersTags, AlwaysSpawnTag, true))
+                SpawnChance = 1.0f;
+            else
+                SpawnChance = UKismetMathLibrary::RandomFloatInRange(UFortScalableFloatUtils::GetValueAtLevel(VID->VehicleMinSpawnPercent, 0), UFortScalableFloatUtils::GetValueAtLevel(VID->VehicleMaxSpawnPercent, 0)) / 100.0f;
+
+            if (UKismetMathLibrary::RandomBoolWithWeight(SpawnChance))
+            {
+                FTransform translivesmatter = UKismetMathLibrary::ComposeTransforms(Spawner->GetTransform(), Spawner->SpawnPoints[UKismetMathLibrary::RandomInteger(Spawner->SpawnPoints.Num())]);;
+                Utils::SpawnActor(VehicleClass, translivesmatter, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+            }
         }
+        Spawners.Free();
 
         Hook::AllVTables<AFortPhysicsPawn>(2192 / 8, ServerMove);
     }

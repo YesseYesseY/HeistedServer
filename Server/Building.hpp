@@ -32,7 +32,7 @@ namespace Building
         BuildingActorToEdit->EditingPlayer = (AFortPlayerStateAthena*)PlayerController->PlayerState;
         BuildingActorToEdit->OnRep_EditingPlayer();
 
-        static auto EditToolItemDef = UObject::FindObject<UFortEditToolItemDefinition>("FortEditToolItemDefinition EditTool.EditTool");
+        static auto EditToolItemDef = Utils::FindObjectFast<UFortEditToolItemDefinition>("EditTool");
         if (auto ItemEntry = Inventory::FindItemEntry(PlayerController, EditToolItemDef))
         {
             BuildingActorToEdit->EditingPlayer = (AFortPlayerStateAthena*)PlayerController->PlayerState;

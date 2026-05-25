@@ -1,9 +1,9 @@
 namespace Utils
 {
     template <typename T = AActor>
-    T* SpawnActor(UClass* ActorClass, FTransform translivesmatter)
+    T* SpawnActor(UClass* ActorClass, FTransform translivesmatter, ESpawnActorCollisionHandlingMethod SACHM = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn)
     {
-        auto Ret = UGameplayStatics::BeginDeferredActorSpawnFromClass(UWorld::GetWorld(), ActorClass, translivesmatter, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn, nullptr, ESpawnActorScaleMethod::MultiplyWithRoot);
+        auto Ret = UGameplayStatics::BeginDeferredActorSpawnFromClass(UWorld::GetWorld(), ActorClass, translivesmatter, SACHM, nullptr, ESpawnActorScaleMethod::MultiplyWithRoot);
 
         if (Ret)
             Ret = UGameplayStatics::FinishSpawningActor(Ret, translivesmatter, ESpawnActorScaleMethod::MultiplyWithRoot);

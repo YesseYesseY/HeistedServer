@@ -16,7 +16,7 @@ namespace Player
         else if (Msg.starts_with(L"client "))
         {
             if (!Controller->CheatManager)
-                Controller->CheatManager = Utils::SpawnObject<UCheatManager>(Controller);
+                Controller->CheatManager = Utils::SpawnObject<UFortCheatManager>(Controller);
             Utils::ExecuteConsoleCommand(Msg.substr(7).c_str(), Controller);
         }
         else if (Msg == L"test")
@@ -64,6 +64,16 @@ namespace Player
             DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>("Asteria_DL_TM_02"));
             // There is Asteria_DL_TM_03 but that's just Asteria_DL_TM_02 but without the props and time machine
         }
+        else if (Msg == L"dragon") // Doesn't work :(
+        {
+            static auto DragonClass = UObject::FindClassFast("BP_CyberDragon_A_C");
+            static auto Dragon = Utils::FindFirstObjectOfClass<AActor>(DragonClass);
+            static auto PlaySound = DragonClass->GetFunction("BP_CyberDragon_A_C", "PlaySound");
+            static auto DragonBreath = (UNiagaraComponent*)Dragon->GetComponentByClass(UNiagaraComponent::StaticClass());
+            if (DragonBreath)
+                DragonBreath->Activate(false);
+            Dragon->ProcessEvent(PlaySound, nullptr);
+        }
         else if (Msg == L"tpalltome")
         {
             auto Pos = Controller->Pawn->K2_GetActorLocation();
@@ -72,6 +82,39 @@ namespace Player
             {
                 Player->PlayerController->Pawn->K2_TeleportTo(Pos, Rot);
             }
+        }
+        else if (Msg == L"aircraft")
+        {
+            static auto MapInfo = Utils::FindObjectFast<AFortAthenaMapInfo>("DefaultMapInfo_UAID_E04F43E629FE0A2D01_1437486460");
+            MsgBox("{}\n{}", MapInfo->GetFullName(), MapInfo->FlightInfos.Num());
+        }
+        else if (Msg == L"storm")
+        {
+            auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+            auto SZ = (AFortSafeZoneIndicator*)Utils::SpawnActor<ASafeZoneIndicator_C>();
+            SZ->PreviousRadius = 100000.0f;
+            SZ->NextRadius = 10000.0f;
+            SZ->SafeZoneStartShrinkTime = TimeSeconds + 120.0f;
+            SZ->SafeZoneFinishShrinkTime = TimeSeconds + 240.0f;
+            SZ->CurrentPhase = 0;
+            SZ->OnRep_CurrentPhase();
+            FFortSafeZonePhaseInfo info;
+            info.Radius = 10000.0f;
+            info.WaitTime = 120.0f;
+            info.ShrinkTime = 120.0f;
+            SZ->SafeZonePhases.Add(info);
+            SZ->PhaseCount = 1;
+            SZ->OnRep_PhaseCount();
+            auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+            Logic->SafeZoneIndicator = SZ;
+            Logic->OnRep_SafeZoneIndicator();
+
+            Logic->SafeZonesStartTime = TimeSeconds + 120.0f;
+            Logic->GamePhase = EAthenaGamePhase::SafeZones;
+            Logic->GamePhaseStep = EAthenaGamePhaseStep::StormHolding;
+            Logic->OnRep_GamePhase(EAthenaGamePhase::None);
+
+            Logic->OnSafeZonePhaseChanged(); // This gets called on OnRep_SafeZoneIndicator
         }
     }
 
