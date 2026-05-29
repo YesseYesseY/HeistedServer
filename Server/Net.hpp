@@ -72,6 +72,8 @@ namespace Net
             thing.a1 = EReplicationSystemSendPass::TickFlush;
             thing.a2 = DeltaSeconds;
             PreSendUpdate(ReplicationSystem, thing);
+
+            GamePhaseLogic::Tick();
         }
 
         TickFlushOriginal(NetDriver, DeltaSeconds);

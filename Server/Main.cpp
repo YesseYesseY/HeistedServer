@@ -17,6 +17,7 @@ using namespace SDK;
 #include <Utils.hpp>
 #include <Memcury.hpp>
 
+#include "GamePhaseLogic.hpp"
 #include "Net.hpp"
 #include "DataLayers.hpp"
 #include "Abilities.hpp"

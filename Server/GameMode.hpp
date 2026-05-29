@@ -1,11 +1,13 @@
-#define SkipAircraft 1
+#define SkipAircraft 0
 
 namespace GameMode
 {
     bool ReadyToStartMatchHook(AFortGameModeBR* GameMode)
     {
-        if (UFortKismetLibrary::GetNumActorsOfClass(UWorld::GetWorld(), AFortPlayerStartWarmup::StaticClass()))
-            return false;
+        // if (UFortKismetLibrary::GetNumActorsOfClass(UWorld::GetWorld(), AFortPlayerStartWarmup::StaticClass()))
+        //     return false;
+
+        auto GameState = (AFortGameStateBR*)GameMode->GameState;
 
         static bool Started = false;
         if (!Started)
@@ -13,7 +15,6 @@ namespace GameMode
             Started = true;
             auto Playlist = UObject::FindObject<UFortPlaylistAthena>("FortPlaylistAthena Playlist_DefaultSolo.Playlist_DefaultSolo");
 
-            auto GameState = (AFortGameStateBR*)GameMode->GameState;
             GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
             GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
             GameState->OnRep_CurrentPlaylistInfo();
@@ -51,6 +52,24 @@ namespace GameMode
 
             for (int i = 0; i < 3; i++)
                 DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>(std::format("Asteria_DL_RT_{}", RTs[i])));
+
+            auto MapInfo = GameState->MapInfo; // Utils::FindObjectFast<AFortAthenaMapInfo>("DefaultMapInfo_UAID_E04F43E629FE0A2D01_1437486460");
+            auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+            FAircraftFlightConstructionInfo FCI = { EAirCraftBehavior::Default };
+            FCI.AircraftCount = 1;
+            FAircraftFlightInfo& (*IFP)(AFortAthenaMapInfo*, AFortGameState*, UFortGameStateComponent_BattleRoyaleGamePhaseLogic*, FAircraftFlightConstructionInfo&) = decltype(IFP)(InSDKUtils::GetImageBase() + 0x787F2F8);
+            auto FI = IFP(MapInfo, GameState, Logic, FCI);
+
+            TArray<AFortAthenaAircraft*> Aircrafts;
+            Aircrafts.Add(AFortAthenaAircraft::SpawnAircraft(UWorld::GetWorld(), MapInfo->AircraftClass, FI));
+            Logic->SetAircrafts(Aircrafts);
+
+            auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+            Logic->WarmupCountdownStartTime = TimeSeconds;
+            Logic->WarmupCountdownEndTime = TimeSeconds + 60.0f;
+            Logic->AircraftStartTime = Logic->WarmupCountdownEndTime;
+            Logic->AircraftRealStartTime = Logic->WarmupCountdownEndTime;
 
             GameMode->bWorldIsReady = true;
 
@@ -95,10 +114,11 @@ namespace GameMode
         // TODO Look into this not working
         // ASC->K2_GiveAbility(UObject::FindClassFast("GA_Athena_Player_DoorBash_C"), 1, 1);
 
+        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_Harvest_Pickaxe_Athena_C_T01"));
+
         for (int i = 0; i < 5; i++) // 5 = The 4 main builds + EditTool, after 5 there is just smartbuilds
             Inventory::GiveItem(PlayerController, GameMode->StartingItems[i].Item, GameMode->StartingItems[i].Count);
 
-        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_Harvest_Pickaxe_Athena_C_T01"));
         Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WoodItemData"));
         Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("StoneItemData"));
         Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("MetalItemData"));

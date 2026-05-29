@@ -46,6 +46,7 @@ namespace Building
         }
     }
 
+    // TODO Finishing edit is weird
     void ServerEndEditingBuildingActor(AFortPlayerController* PlayerController, ABuildingSMActor* BuildingActorToStopEditing)
     {
         BuildingActorToStopEditing->EditingPlayer = nullptr;

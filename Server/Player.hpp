@@ -30,7 +30,13 @@ namespace Player
         }
         else if (Msg == L"startaircraft")
         {
-            // Nope :(
+            auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+            if (Logic->GamePhase == EAthenaGamePhase::Warmup)
+            {
+                auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+                Logic->AircraftStartTime = TimeSeconds;
+                Logic->AircraftRealStartTime = TimeSeconds;
+            }
         }
         else if (Msg == L"spawnrockbr")
         {
@@ -83,11 +89,6 @@ namespace Player
                 Player->PlayerController->Pawn->K2_TeleportTo(Pos, Rot);
             }
         }
-        else if (Msg == L"aircraft")
-        {
-            static auto MapInfo = Utils::FindObjectFast<AFortAthenaMapInfo>("DefaultMapInfo_UAID_E04F43E629FE0A2D01_1437486460");
-            MsgBox("{}\n{}", MapInfo->GetFullName(), MapInfo->FlightInfos.Num());
-        }
         else if (Msg == L"storm")
         {
             auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
@@ -138,10 +139,21 @@ namespace Player
         }
     }
 
+    void ServerAttemptAircraftJump(UFortControllerComponent_Aircraft* Component, FRotator& ClientRotation)
+    {
+        static auto GameMode = (AFortGameModeBR*)UWorld::GetWorld()->AuthorityGameMode;
+        auto Controller = (AFortPlayerControllerAthena*)Component->GetOwner();
+        auto Pawn = GameMode::SpawnDefaultPawnForHook(GameMode, Controller, Component->CurrentAircraft);
+        Controller->Possess(Pawn);
+        Controller->ClientSetRotation(ClientRotation, false);
+    }
+
     void Init()
     {
         Hook::VTable<AFortPlayerControllerAthena>(2440 / 8, ServerAcknowledgePossession);
         Hook::VTable<AFortPlayerControllerAthena>(4024 / 8, ServerCheat);
+        Hook::VTable<UFortControllerComponent_Aircraft>(1320 / 8, ServerAttemptAircraftJump);
+
         Hook::AllVTables<APlayerController>(2032 / 8, GetPlayerViewPoint);
     }
 }
