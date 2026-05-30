@@ -89,6 +89,16 @@ namespace Player
                 Player->PlayerController->Pawn->K2_TeleportTo(Pos, Rot);
             }
         }
+        else if (Msg == L"pickup")
+        {
+            static auto ItemDef = Utils::FindObjectFast<UFortWeaponRangedItemDefinition>("WID_Assault_RedDotBurstAR_Athena_UR_Slone");
+            auto Pos = Controller->Pawn->K2_GetActorLocation();
+            auto Pickup = Utils::SpawnActor<AFortPickupAthena>(Pos);
+            Pickup->PrimaryPickupItemEntry.ItemDefinition = ItemDef;
+            Pickup->PrimaryPickupItemEntry.Count = 1;
+            Pickup->PrimaryPickupItemEntry.LoadedAmmo = 30;
+            Pickup->TossPickup(Pos, nullptr, 1, true, false, EFortPickupSourceTypeFlag::Other, EFortPickupSpawnSource::Unset);
+        }
         else if (Msg == L"storm")
         {
             auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());

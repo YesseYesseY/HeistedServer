@@ -63,8 +63,25 @@ namespace Inventory
             EquipItemEntry(PlayerController, ItemEntry);
     }
 
+    void ServerHandlePickupInfo(AFortPlayerPawn* Pawn, AFortPickup* Pickup, FFortPickupRequestInfo& Params)
+    {
+        Utils::SetWeakPtr(Pickup->PickupLocationData.PickupTarget, Pawn);
+        Pickup->PickupLocationData.FlyTime = Params.FlyTime / 4;
+        Pickup->PickupLocationData.bPlayPickupSound = Params.bPlayPickupSound;
+        Pickup->OnRep_PickupLocationData();
+    }
+
+    void GivePickupToPlayer(AFortPickup* Pickup, uintptr_t InventoryInterface, uint8 a3)
+    {
+        AFortPlayerController* Controller = (AFortPlayerController*)(InventoryInterface - 0x8B8);
+        GiveItem(Controller, Pickup->PrimaryPickupItemEntry.ItemDefinition, Pickup->PrimaryPickupItemEntry.Count);
+    }
+
     void Init()
     {
         Hook::VTable<AFortPlayerControllerAthena>(4456 / 8, ServerExecuteInventoryItem);
+        Hook::VTable<AFortPlayerPawnAthena>(4576 / 8, ServerHandlePickupInfo);
+
+        Hook::Function(InSDKUtils::GetImageBase() + 0x838A8A0, GivePickupToPlayer);
     }
 }
