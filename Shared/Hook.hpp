@@ -37,7 +37,7 @@ namespace Hook
 
             if (((UClass*)Object)->IsSubclassOf(T::StaticClass()))
             {
-                Hook::VTable((void**)((UClass*)Object)->DefaultObject->VTable, Index, Hook, Original);
+                Hook::VTable((void**)((UClass*)Object)->ClassDefaultObject->VTable, Index, Hook, Original);
             }
         }
     }
