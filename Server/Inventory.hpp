@@ -75,6 +75,7 @@ namespace Inventory
     {
         AFortPlayerController* Controller = (AFortPlayerController*)(InventoryInterface - 0x8B8);
         GiveItem(Controller, Pickup->PrimaryPickupItemEntry.ItemDefinition, Pickup->PrimaryPickupItemEntry.Count);
+        Pickup->K2_DestroyActor();
     }
 
     void Init()

@@ -2,6 +2,8 @@
 #include <iostream>
 #include <fstream>
 
+#define MsgBox(...) MessageBoxA(NULL, std::format(__VA_ARGS__).c_str(), "HeistedClient", MB_OK)
+
 #include <SDK/FortniteGame_classes.hpp>
 using namespace SDK;
 

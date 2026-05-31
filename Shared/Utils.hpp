@@ -133,10 +133,10 @@ namespace Utils
     T* GetSoftPtr(TSoftObjectPtr<T>& SoftPtr)
     {
         if (auto WeakObj = GetWeakPtr(SoftPtr.WeakPtr))
-            return WeakObj;
+            return (T*)WeakObj;
 
-        if (auto Obj = (T*)UKismetSystemLibrary::LoadAsset_Blocking(SoftPtr))
-            return Obj;
+        if (auto Obj = UKismetSystemLibrary::LoadAsset_Blocking(*(TSoftObjectPtr<UObject>*)&SoftPtr))
+            return (T*)Obj;
 
         return nullptr;
     }
@@ -158,10 +158,10 @@ namespace Utils
     }
 
     template <typename T>
-    TArray<T*> GetAllActorsOfClass()
+    TArray<T*> GetAllActorsOfClass(UClass* Class = T::StaticClass())
     {
         TArray<AActor*> Ret;
-        UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), T::StaticClass(), &Ret);
+        UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), Class, &Ret);
 
         return *(TArray<T*>*)&Ret;
     }

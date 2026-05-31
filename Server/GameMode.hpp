@@ -39,6 +39,7 @@ namespace GameMode
         {
             GameFeatures::Init();
             Vehicles::Init();
+            Loot::Init();
 
             // Put time machine in kado thornes basement
             DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>("Asteria_DL_TM_01"));

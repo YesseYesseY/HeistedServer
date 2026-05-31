@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <print>
 
 #define MsgBox(...) MessageBoxA(NULL, std::format(__VA_ARGS__).c_str(), "HeistedServer", MB_OK)
 #define JustLoadMeIntoAsteriaIWantToDumpAnSDK 0
@@ -23,6 +24,7 @@ using namespace SDK;
 #include "Abilities.hpp"
 #include "Inventory.hpp"
 #include "GameFeatures.hpp"
+#include "Loot.hpp"
 #include "Vehicles.hpp"
 #include "GameMode.hpp"
 #include "Player.hpp"
