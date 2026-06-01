@@ -37,6 +37,20 @@ namespace GamePhaseLogic
                     EnterAircraft(Component, Aircraft);
                     Controller->Pawn->K2_DestroyActor();
                 }
+
+                auto KeysAndLocks = Utils::GetAllActorsOfClass<ABGA_KeysAndLocks_DisplayCase_C>();
+                auto TempItemDef = Utils::FindObjectFast<UFortWorldItemDefinition>("WID_GrenadeLauncher_Hopscotch_Athena_SR");
+                for (auto Case : KeysAndLocks)
+                {
+                    auto GenLoot = Loot::Get(Case->Tier_Group_Name);
+                    for (auto thing : GenLoot)
+                        Case->Loot.Add(UFortKismetLibrary::CreateItemEntry(thing.first, thing.second, 0));
+
+                    Case->ItemDefinition = (UFortWorldItemDefinition*)Case->Loot[0].ItemDefinition;
+                    Case->SpawnCount = Case->Loot[0].Count;
+                    Case->OnRep_ItemDefinition();
+                    Case->ForceNetUpdate();
+                }
             }
         }
     }

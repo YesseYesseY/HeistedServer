@@ -44,6 +44,7 @@ project "HeistedServer"
         "SDK/SDK/FortniteGame_functions.cpp",
         "SDK/SDK/GameplayAbilities_functions.cpp",
         "SDK/SDK/GameplayTags_functions.cpp",
+        "SDK/SDK/BGA_KeysAndLocks_DisplayCase_functions.cpp",
     }
     includedirs {
         "SDK",

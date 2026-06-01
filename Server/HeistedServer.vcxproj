@@ -51,6 +51,7 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\SDK\SDK\BGA_KeysAndLocks_DisplayCase_functions.cpp" />
     <ClCompile Include="..\SDK\SDK\Basic.cpp" />
     <ClCompile Include="..\SDK\SDK\CoreUObject_functions.cpp" />
     <ClCompile Include="..\SDK\SDK\Engine_functions.cpp" />

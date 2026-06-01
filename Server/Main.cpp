@@ -11,6 +11,7 @@
 #include <SDK/LagerRuntime_classes.hpp>
 #include <SDK/GameplayTags_classes.hpp>
 #include <SDK/SafeZoneIndicator_classes.hpp>
+#include <SDK/BGA_KeysAndLocks_DisplayCase_classes.hpp>
 using namespace SDK;
 
 #include <Frame.hpp>
@@ -18,14 +19,15 @@ using namespace SDK;
 #include <Utils.hpp>
 #include <Memcury.hpp>
 
+#include "GameFeatures.hpp"
+#include "Loot.hpp"
+#include "Vehicles.hpp"
+
 #include "GamePhaseLogic.hpp"
 #include "Net.hpp"
 #include "DataLayers.hpp"
 #include "Abilities.hpp"
 #include "Inventory.hpp"
-#include "GameFeatures.hpp"
-#include "Loot.hpp"
-#include "Vehicles.hpp"
 #include "GameMode.hpp"
 #include "Player.hpp"
 #include "Building.hpp"

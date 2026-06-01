@@ -302,9 +302,42 @@ namespace Loot
         }
     }
 
+    void K2_SpawnPickupInWorld(UObject* Obj, FFrame* Stack, AFortPickup** Ret)
+    {
+        FRAME_PROP(UObject*, WorldContextObject);
+        FRAME_PROP(UFortWorldItemDefinition*, ItemDefinition);
+        FRAME_PROP(int32, NumberToSpawn);
+        FRAME_PROP(FVector, Position);
+        FRAME_PROP(FVector, Direction);
+        FRAME_PROP(int32, OverrideMaxStackCount);
+        FRAME_PROP(bool, bToss);
+        FRAME_PROP(bool, bRandomRotation);
+        FRAME_PROP(bool, bBlockedFromAutoPickup);
+        FRAME_PROP(int32, PickupInstigatorHandle);
+        FRAME_PROP(EFortPickupSourceTypeFlag, SourceType);
+        FRAME_PROP(EFortPickupSpawnSource, Source);
+        FRAME_PROP(AFortPlayerController*, OptionalOwnerPC);
+        FRAME_PROP(bool, bPickupOnlyRelevantToOwner);
+        FRAME_END();
+
+        auto Pickup = Utils::SpawnActor<AFortPickupAthena>(Position);
+        Pickup->bRandomRotation = bRandomRotation;
+        Pickup->PrimaryPickupItemEntry.ItemDefinition = ItemDefinition;
+        Pickup->PrimaryPickupItemEntry.Count = NumberToSpawn;
+        Pickup->OnRep_PrimaryPickupItemEntry();
+        if (bToss)
+            Pickup->TossPickup(Position, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, OverrideMaxStackCount, bToss, true, SourceType, Source);
+
+        *Ret = Pickup;
+    }
+
+    // TODO K2_RemoveItemFromPlayer
+    //      PickLootDrops
+
     void Init()
     {
         Hook::Function(InSDKUtils::GetImageBase() + 0x7C4C0A4, SpawnLoot);
+        Hook::UFunc("Function FortniteGame.FortKismetLibrary.K2_SpawnPickupInWorld", K2_SpawnPickupInWorld);
 
         auto GameState = (AFortGameStateAthena*)UGameplayStatics::GetGameState(UWorld::GetWorld());
         auto CurrentPlaylist = GameState->CurrentPlaylistInfo.BasePlaylist;
@@ -358,5 +391,6 @@ namespace Loot
         for (auto Container : FloorLootContainers)
             SpawnLoot(Container);
         FloorLootContainers.Free();
+
     }
 }

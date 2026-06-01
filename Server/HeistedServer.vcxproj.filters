@@ -21,6 +21,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\SDK\SDK\BGA_KeysAndLocks_DisplayCase_functions.cpp">
+      <Filter>..\SDK\SDK</Filter>
+    </ClCompile>
     <ClCompile Include="..\SDK\SDK\Basic.cpp">
       <Filter>..\SDK\SDK</Filter>
     </ClCompile>

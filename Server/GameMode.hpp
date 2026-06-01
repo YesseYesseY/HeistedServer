@@ -4,9 +4,6 @@ namespace GameMode
 {
     bool ReadyToStartMatchHook(AFortGameModeBR* GameMode)
     {
-        // if (UFortKismetLibrary::GetNumActorsOfClass(UWorld::GetWorld(), AFortPlayerStartWarmup::StaticClass()))
-        //     return false;
-
         auto GameState = (AFortGameStateBR*)GameMode->GameState;
 
         static bool Started = false;
@@ -126,6 +123,7 @@ namespace GameMode
         Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_Melee_Katana_R"));
         Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_GrenadeLauncher_Hopscotch_Athena_SR"));
         Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("AmmoDataRockets"));
+        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("AGID_KeysAndLocks_Key"));
     }
 
     void Init()
