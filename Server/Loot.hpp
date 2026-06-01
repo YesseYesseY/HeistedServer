@@ -331,8 +331,7 @@ namespace Loot
         *Ret = Pickup;
     }
 
-    // TODO K2_RemoveItemFromPlayer
-    //      PickLootDrops
+    // TODO PickLootDrops
 
     void Init()
     {

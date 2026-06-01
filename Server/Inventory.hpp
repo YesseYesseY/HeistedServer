@@ -22,16 +22,23 @@ namespace Inventory
         return nullptr;
     }
 
-    void Update(AFortPlayerController* PlayerController)
+    void Update(AFortPlayerController* PlayerController, FFortItemEntry* ItemEntry = nullptr)
     {
         PlayerController->WorldInventory->HandleInventoryLocalUpdate();
-        Utils::MarkArrayDirty(PlayerController->WorldInventory->Inventory);
+        if (ItemEntry)
+        {
+            Utils::MarkItemDirty(PlayerController->WorldInventory->Inventory, ItemEntry);
+        }
+        else
+        {
+            Utils::MarkArrayDirty(PlayerController->WorldInventory->Inventory);
+        }
     }
 
-    void GiveItem(AFortPlayerController* PlayerController, UFortItemDefinition* ItemDef, int32 Count = -1)
+    UFortWorldItem* GiveItem(AFortPlayerController* PlayerController, UFortItemDefinition* ItemDef, int32 Count = -1)
     {
         if (!ItemDef || Count == 0)
-            return;
+            return nullptr;
 
         if (Count == -1)
             Count = ItemDef->GetMaxStackSize(nullptr);
@@ -46,6 +53,8 @@ namespace Inventory
         Inv.ReplicatedEntries.Add(Item->ItemEntry);
         Inv.ItemInstances.Add(Item);
         Update(PlayerController);
+
+        return Item;
     }
 
     void EquipItemEntry(AFortPlayerController* PlayerController, FFortItemEntry* ItemEntry)
@@ -78,11 +87,71 @@ namespace Inventory
         Pickup->K2_DestroyActor();
     }
 
+    int32 RemoveItem(AFortPlayerController* PlayerController, UFortWorldItemDefinition* ItemDefinition, int32 Amount)
+    {
+        int32 Ret = 0;
+
+        for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
+        {
+            auto& ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries[i];
+            if (ItemEntry.ItemDefinition != ItemDefinition)
+                continue;
+
+            if (Amount >= ItemEntry.Count)
+            {
+                Ret = ItemEntry.Count;
+                PlayerController->WorldInventory->Inventory.ReplicatedEntries.Remove(i);
+                PlayerController->WorldInventory->Inventory.ItemInstances.Remove(i);
+                Update(PlayerController);
+                Amount -= Ret;
+            }
+            else
+            {
+                Ret = Amount;
+                ItemEntry.Count -= Amount;
+                Update(PlayerController, &ItemEntry);
+                Amount = 0;
+            }
+
+            if (Amount <= 0)
+                break;
+        }
+
+        return Ret;
+    }
+
+    void K2_RemoveItemFromPlayer(UObject* Object, FFrame* Stack, int32* Ret)
+    {
+        FRAME_PROP(AFortPlayerController*, PlayerController);
+        FRAME_PROP(UFortWorldItemDefinition*, ItemDefinition);
+        FRAME_PROP(FGuid, ItemVariantGuid);
+        FRAME_PROP(int32, AmountToRemove);
+        FRAME_PROP(bool, bForceRemoval);
+        FRAME_END();
+
+        *Ret = RemoveItem(PlayerController, ItemDefinition, AmountToRemove);
+    }
+
+    void IML_AddItem(UObject* Object, FFrame* Stack, UFortWorldItem** Ret)
+    {
+        FRAME_PROP(TScriptInterface<IFortInventoryOwnerInterface>, InventoryInterface);
+        FRAME_PROP(UFortItemDefinition*, ItemDefinition);
+        FRAME_PROP(int32, Count);
+        FRAME_PROP(bool, bShouldFireCollectStatEvent);
+        FRAME_END();
+
+        auto Controller = (AFortPlayerController*)InventoryInterface.ObjectPointer;
+        GiveItem(Controller, ItemDefinition, Count);
+    }
+
     void Init()
     {
         Hook::VTable<AFortPlayerControllerAthena>(4456 / 8, ServerExecuteInventoryItem);
         Hook::VTable<AFortPlayerPawnAthena>(4576 / 8, ServerHandlePickupInfo);
 
         Hook::Function(InSDKUtils::GetImageBase() + 0x838A8A0, GivePickupToPlayer);
+
+        Hook::UFunc("Function FortniteGame.FortKismetLibrary.K2_RemoveItemFromPlayer", K2_RemoveItemFromPlayer);
+        Hook::UFunc("Function FortniteGame.InventoryManagementLibrary.AddItem", IML_AddItem);
     }
 }

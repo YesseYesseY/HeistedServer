@@ -41,6 +41,12 @@ namespace Utils
         MarkDirty(Arr);
     }
 
+    void MarkItemDirty(FFastArraySerializer& Arr, FFastArraySerializerItem* Item)
+    {
+        static void (*MarkDirty)(FFastArraySerializer& Arr, FFastArraySerializerItem*) = decltype(MarkDirty)(InSDKUtils::GetImageBase() + 0x189EF60);
+        MarkDirty(Arr, Item);
+    }
+
     std::string GetName(UObject* Obj)
     {
         return Obj ? Obj->Name.GetRawString() : "None";
