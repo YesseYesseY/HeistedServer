@@ -328,15 +328,36 @@ namespace Loot
         if (bToss)
             Pickup->TossPickup(Position, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, OverrideMaxStackCount, bToss, true, SourceType, Source);
 
-        *Ret = Pickup;
+        if (Ret)
+            *Ret = Pickup;
     }
 
-    // TODO PickLootDrops
+    // TODO
+    // void PickLootDrops(UObject* Object, FFrame* Stack, bool* Ret)
+    // {
+    //     FRAME_PROP(UObject*, WorldContextObject);
+    //     FRAME_PROP_REF(TArray<FFortItemEntry>, OutLootToDrop);
+    //     FRAME_PROP(FName, TierGroupName);
+    //     FRAME_PROP(int32, WorldLevel);
+    //     FRAME_PROP(int32, ForcedLootTier);
+    //     FRAME_END();
+
+    //     auto GenLoot = Get(TierGroupName, ForcedLootTier);
+    //     for (auto thing : GenLoot)
+    //     {
+    //         if (thing.first && thing.second > 0)
+    //             OutLootToDrop.Add(UFortKismetLibrary::CreateItemEntry(thing.first, thing.second, 0));
+    //     }
+
+    //     if (Ret)
+    //         *Ret = OutLootToDrop.Num() > 0;
+    // }
 
     void Init()
     {
         Hook::Function(InSDKUtils::GetImageBase() + 0x7C4C0A4, SpawnLoot);
         Hook::UFunc("Function FortniteGame.FortKismetLibrary.K2_SpawnPickupInWorld", K2_SpawnPickupInWorld);
+        // Hook::UFunc("Function FortniteGame.FortKismetLibrary.PickLootDrops", PickLootDrops);
 
         auto GameState = (AFortGameStateAthena*)UGameplayStatics::GetGameState(UWorld::GetWorld());
         auto CurrentPlaylist = GameState->CurrentPlaylistInfo.BasePlaylist;

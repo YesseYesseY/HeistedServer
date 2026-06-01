@@ -38,8 +38,8 @@ namespace GamePhaseLogic
                     Controller->Pawn->K2_DestroyActor();
                 }
 
+                // TODO KeysAndLock_DisplayCase calls PickLootDrops somehow, idk how because FModels decompiler isn't good enough so i gotta port my decompiler to 26.30 to check :/
                 auto KeysAndLocks = Utils::GetAllActorsOfClass<ABGA_KeysAndLocks_DisplayCase_C>();
-                auto TempItemDef = Utils::FindObjectFast<UFortWorldItemDefinition>("WID_GrenadeLauncher_Hopscotch_Athena_SR");
                 for (auto Case : KeysAndLocks)
                 {
                     auto GenLoot = Loot::Get(Case->Tier_Group_Name);

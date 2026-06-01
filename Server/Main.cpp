@@ -50,6 +50,7 @@ DWORD MainThread(HMODULE Module)
 #endif
 
     FMemory::Init((void*)(InSDKUtils::GetImageBase() + 0x3E54B6C));
+    FFrame::Init();
     Net::Init();
     GameMode::Init();
     Player::Init();
