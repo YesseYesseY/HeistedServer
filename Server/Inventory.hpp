@@ -144,12 +144,27 @@ namespace Inventory
         GiveItem(Controller, ItemDefinition, Count);
     }
 
+    void (*WeaponModAmmoOriginal)(AFortWeapon* Weapon, int a2);
+    void WeaponModAmmo(AFortWeapon* Weapon, int a2)
+    {
+        WeaponModAmmoOriginal(Weapon, a2);
+
+        auto Pawn = (AFortPlayerPawnAthena*)Weapon->GetOwner();
+        auto Controller = (AFortPlayerControllerAthena*)Pawn->Controller;
+        if (auto ItemEntry = FindItemEntry(Controller, Weapon->ItemEntryGuid))
+        {
+            ItemEntry->LoadedAmmo = Weapon->AmmoCount;
+            Update(Controller, ItemEntry);
+        }
+    }
+
     void Init()
     {
         Hook::VTable<AFortPlayerControllerAthena>(4456 / 8, ServerExecuteInventoryItem);
         Hook::VTable<AFortPlayerPawnAthena>(4576 / 8, ServerHandlePickupInfo);
 
         Hook::Function(InSDKUtils::GetImageBase() + 0x838A8A0, GivePickupToPlayer);
+        Hook::Function(InSDKUtils::GetImageBase() + 0x8CA4A00, WeaponModAmmo, &WeaponModAmmoOriginal);
 
         Hook::UFunc("Function FortniteGame.FortKismetLibrary.K2_RemoveItemFromPlayer", K2_RemoveItemFromPlayer);
         Hook::UFunc("Function FortniteGame.InventoryManagementLibrary.AddItem", IML_AddItem);

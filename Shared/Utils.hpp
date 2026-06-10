@@ -205,6 +205,11 @@ namespace Utils
 
         return nullptr;
     }
+
+    TArray<TWeakObjectPtr<APlayerController>>& GetPlayerControllerList(UWorld* World = UWorld::GetWorld())
+    {
+        return *(TArray<TWeakObjectPtr<APlayerController>>*)(int64(World) + 0x1F8);
+    }
 }
 
 template<>

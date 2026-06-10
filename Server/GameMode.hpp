@@ -17,6 +17,7 @@ namespace GameMode
             GameState->OnRep_CurrentPlaylistInfo();
 
             auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+#if 0
 #if SkipAircraft
             Logic->GamePhase = EAthenaGamePhase::None;
 #else
@@ -24,6 +25,7 @@ namespace GameMode
             Logic->GamePhaseStep = EAthenaGamePhaseStep::Warmup;
 #endif
             Logic->OnRep_GamePhase(EAthenaGamePhase::Setup);
+#endif
 
             Net::Listen();
 
@@ -34,6 +36,9 @@ namespace GameMode
 
         if (GameMode->NumPlayers > 0)
         {
+            // 19.40 Calls SetGamePhase(EAthenaGamePhase::Warmup) on AFortGameModeAthena::HandleMatchHasStarted, so this is close enough to real logic
+            GamePhaseLogic::SetGamePhase(EAthenaGamePhase::Warmup);
+
             GameFeatures::Init();
             Vehicles::Init();
             Loot::Init();
@@ -51,16 +56,19 @@ namespace GameMode
             for (int i = 0; i < 3; i++)
                 DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>(std::format("Asteria_DL_RT_{}", RTs[i])));
 
-            auto MapInfo = GameState->MapInfo; // Utils::FindObjectFast<AFortAthenaMapInfo>("DefaultMapInfo_UAID_E04F43E629FE0A2D01_1437486460");
             auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+            auto MapInfo = GameState->MapInfo; // Utils::FindObjectFast<AFortAthenaMapInfo>("DefaultMapInfo_UAID_E04F43E629FE0A2D01_1437486460");
 
             FAircraftFlightConstructionInfo FCI = { EAirCraftBehavior::Default };
             FCI.AircraftCount = 1;
             FAircraftFlightInfo& (*IFP)(AFortAthenaMapInfo*, AFortGameState*, UFortGameStateComponent_BattleRoyaleGamePhaseLogic*, FAircraftFlightConstructionInfo&) = decltype(IFP)(InSDKUtils::GetImageBase() + 0x787F2F8);
-            auto FI = IFP(MapInfo, GameState, Logic, FCI);
+            IFP(MapInfo, GameState, Logic, FCI);
 
             TArray<AFortAthenaAircraft*> Aircrafts;
-            Aircrafts.Add(AFortAthenaAircraft::SpawnAircraft(UWorld::GetWorld(), MapInfo->AircraftClass, FI));
+            for (int i = 0; i < MapInfo->FlightInfos.Num(); i++)
+            {
+                Aircrafts.Add(AFortAthenaAircraft::SpawnAircraft(UWorld::GetWorld(), MapInfo->AircraftClass, MapInfo->FlightInfos[i]));
+            }
             Logic->SetAircrafts(Aircrafts);
 
             auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
