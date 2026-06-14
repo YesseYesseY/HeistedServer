@@ -57,7 +57,7 @@ namespace GameMode
                 DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>(std::format("Asteria_DL_RT_{}", RTs[i])));
 
             auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
-            auto MapInfo = GameState->MapInfo; // Utils::FindObjectFast<AFortAthenaMapInfo>("DefaultMapInfo_UAID_E04F43E629FE0A2D01_1437486460");
+            auto MapInfo = GameState->MapInfo;
 
             FAircraftFlightConstructionInfo FCI = { EAirCraftBehavior::Default };
             FCI.AircraftCount = 1;

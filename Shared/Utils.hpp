@@ -210,6 +210,12 @@ namespace Utils
     {
         return *(TArray<TWeakObjectPtr<APlayerController>>*)(int64(World) + 0x1F8);
     }
+
+    void ProcessMulticastDelegate(void* a1, void* a2)
+    {
+        static void (*PMD)(void*, void*) = decltype(PMD)(InSDKUtils::GetImageBase() + 0x10957B0);
+        PMD(a1, a2);
+    }
 }
 
 template<>

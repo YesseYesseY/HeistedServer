@@ -21,7 +21,8 @@ namespace Player
         }
         else if (Msg == L"test")
         {
-            MsgBox("{} {}", UKismetSystemLibrary::IsServer(UWorld::GetWorld()), UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
+            MsgBox("{}", UKismetSystemLibrary::GetEngineVersion().ToString());
+            // MsgBox("{} {}", UKismetSystemLibrary::IsServer(UWorld::GetWorld()), UKismetSystemLibrary::IsDedicatedServer(UWorld::GetWorld()));
             // MsgBox("{}", UFortCurieBlueprintFunctionLibrary::IsCurieEnabled());
         }
         else if (Msg == L"dumpobjects")
@@ -103,29 +104,39 @@ namespace Player
         {
             auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
             auto SZ = (AFortSafeZoneIndicator*)Utils::SpawnActor<ASafeZoneIndicator_C>();
-            SZ->PreviousRadius = 100000.0f;
-            SZ->NextRadius = 10000.0f;
-            SZ->SafeZoneStartShrinkTime = TimeSeconds + 120.0f;
-            SZ->SafeZoneFinishShrinkTime = TimeSeconds + 240.0f;
+            auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+            auto GameState = (AFortGameStateAthena*)Logic->GetOwner();
+            auto MapInfo = GameState->MapInfo;
+
+            auto& SZD = MapInfo->SafeZoneDefinition;
+            SZ->PhaseCount = UFortScalableFloatUtils::GetValueAsInteger(SZD.Count, 0);
+            for (int i = 0; i < SZ->PhaseCount; i++)
+            {
+                FFortSafeZonePhaseInfo info;
+                info.Radius = UFortScalableFloatUtils::GetValueAtLevel(SZD.Radius, i);
+                info.WaitTime = UFortScalableFloatUtils::GetValueAtLevel(SZD.WaitTime, i);
+                info.ShrinkTime = UFortScalableFloatUtils::GetValueAtLevel(SZD.ShrinkTime, i);
+                SZ->SafeZonePhases.Add(info);
+            }
+            SZ->OnRep_PhaseCount();
+
+            auto StartingRadius = UFortScalableFloatUtils::GetValueAtLevel(MapInfo->SafeZoneStartingRadius, 0);
+
+            SZ->PreviousRadius = fmaxf(StartingRadius, SZ->SafeZonePhases[0].Radius);
+            SZ->NextRadius = SZ->PreviousRadius;
+
+            SZ->SafeZoneStartShrinkTime = TimeSeconds + SZ->SafeZonePhases[0].WaitTime;
+            SZ->SafeZoneFinishShrinkTime = SZ->SafeZoneStartShrinkTime + SZ->SafeZonePhases[0].ShrinkTime;
+
             SZ->CurrentPhase = 0;
             SZ->OnRep_CurrentPhase();
-            FFortSafeZonePhaseInfo info;
-            info.Radius = 10000.0f;
-            info.WaitTime = 120.0f;
-            info.ShrinkTime = 120.0f;
-            SZ->SafeZonePhases.Add(info);
-            SZ->PhaseCount = 1;
-            SZ->OnRep_PhaseCount();
-            auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
             Logic->SafeZoneIndicator = SZ;
             Logic->OnRep_SafeZoneIndicator();
 
-            Logic->SafeZonesStartTime = TimeSeconds + 120.0f;
-            Logic->GamePhase = EAthenaGamePhase::SafeZones;
+            // I have no idea how to make the timer work
             Logic->GamePhaseStep = EAthenaGamePhaseStep::StormHolding;
-            Logic->OnRep_GamePhase(EAthenaGamePhase::None);
-
-            Logic->OnSafeZonePhaseChanged(); // This gets called on OnRep_SafeZoneIndicator
         }
     }
 

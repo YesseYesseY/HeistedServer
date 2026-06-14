@@ -50,6 +50,11 @@ namespace Loot
     {
         float TotalWeight = 0.0f;
         std::vector<WeightedType<T>> Items;
+
+        bool IsValid()
+        {
+            return Items.size() > 0 && TotalWeight > 0.0f;
+        }
     
         T& GetRandomItem()
         {
@@ -83,6 +88,11 @@ namespace Loot
     {
         float TotalWeight = 0.0f;
         std::vector<T> Items;
+
+        bool IsValid()
+        {
+            return Items.size() > 0 && TotalWeight > 0.0f;
+        }
     
         T& GetRandomItem()
         {
@@ -195,6 +205,8 @@ namespace Loot
         }
 
         auto LootTier = LootTiers[TierGroup];
+        if (!LootTier.IsValid())
+            return Ret;
         auto LTI = InLootTier == -1 ? LootTier.GetRandomItem() : LootTier.GetRandomItemWithLootTier(InLootTier);
 
         if (!LootPackages.contains(LTI.LootPackage))
@@ -332,32 +344,34 @@ namespace Loot
             *Ret = Pickup;
     }
 
-    // TODO
-    // void PickLootDrops(UObject* Object, FFrame* Stack, bool* Ret)
-    // {
-    //     FRAME_PROP(UObject*, WorldContextObject);
-    //     FRAME_PROP_REF(TArray<FFortItemEntry>, OutLootToDrop);
-    //     FRAME_PROP(FName, TierGroupName);
-    //     FRAME_PROP(int32, WorldLevel);
-    //     FRAME_PROP(int32, ForcedLootTier);
-    //     FRAME_END();
+    void PickLootDrops(UObject* Object, FFrame* Stack, bool* Ret)
+    {
+        FRAME_PROP(UObject*, WorldContextObject);
+        FRAME_PROP_REF(TArray<FFortItemEntry>, OutLootToDrop);
+        FRAME_PROP(FName, TierGroupName);
+        FRAME_PROP(int32, WorldLevel);
+        FRAME_PROP(int32, ForcedLootTier);
+        FRAME_END();
 
-    //     auto GenLoot = Get(TierGroupName, ForcedLootTier);
-    //     for (auto thing : GenLoot)
-    //     {
-    //         if (thing.first && thing.second > 0)
-    //             OutLootToDrop.Add(UFortKismetLibrary::CreateItemEntry(thing.first, thing.second, 0));
-    //     }
+        static auto TempItemDef = Utils::FindObjectFast<UFortItemDefinition>("WID_GrenadeLauncher_Hopscotch_Athena_SR");
+        // OutLootToDrop.Add(UFortKismetLibrary::CreateItemEntry(TempItemDef, 1, 0));
 
-    //     if (Ret)
-    //         *Ret = OutLootToDrop.Num() > 0;
-    // }
+        auto GenLoot = Get(TierGroupName, ForcedLootTier);
+        for (auto thing : GenLoot)
+        {
+            if (thing.first && thing.second > 0)
+                OutLootToDrop.Add(UFortKismetLibrary::CreateItemEntry(thing.first, thing.second, 0));
+        }
+
+        if (Ret)
+            *Ret = OutLootToDrop.Num() > 0;
+    }
 
     void Init()
     {
         Hook::Function(InSDKUtils::GetImageBase() + 0x7C4C0A4, SpawnLoot);
         Hook::UFunc("Function FortniteGame.FortKismetLibrary.K2_SpawnPickupInWorld", K2_SpawnPickupInWorld);
-        // Hook::UFunc("Function FortniteGame.FortKismetLibrary.PickLootDrops", PickLootDrops);
+        Hook::UFunc("Function FortniteGame.FortKismetLibrary.PickLootDrops", PickLootDrops);
 
         auto GameState = (AFortGameStateAthena*)UGameplayStatics::GetGameState(UWorld::GetWorld());
         auto CurrentPlaylist = GameState->CurrentPlaylistInfo.BasePlaylist;
@@ -399,6 +413,10 @@ namespace Loot
                 AddLPD(Utils::GetSoftPtr(Data->DefaultLootTableData.LootPackageData));
             }
         }
+
+        auto GameMode = (AFortGameModeAthena*)GameState->AuthorityGameMode;
+        *(bool*)(int64(GameMode) + 0x1690) = true; // HavePlaylistLootTablesBeenApplied
+        Utils::ProcessMulticastDelegate(&GameMode->OnPlaylistLootTablesAppliedDelegate, 0);
 
         auto FLC1 = UObject::FindClassFast("Tiered_Athena_FloorLoot_01_C");
         auto FLC2 = UObject::FindClassFast("Tiered_Athena_FloorLoot_Warmup_C");

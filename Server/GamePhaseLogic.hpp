@@ -72,7 +72,6 @@ namespace GamePhaseLogic
 
                     static void (*EW)(AFortPlayerPawn*, AFortWeapon*) = decltype(EW)(InSDKUtils::GetImageBase() + 0x87951AC);
                     static void (*SIIAS)(AFortPlayerPawn*, bool) = decltype(SIIAS)(InSDKUtils::GetImageBase() + 0x87E50BC);
-                    static void (*PMD)(void*, void*) = decltype(PMD)(InSDKUtils::GetImageBase() + 0x10957B0);
 
                     // AFortPlayerPawn::EquipWeapon(nullptr);
                     EW(Pawn, nullptr);
@@ -82,7 +81,7 @@ namespace GamePhaseLogic
                     // It calls a null func here
 
                     // ProcessMulticastDelegate(OnEnteredAircraft);
-                    PMD(&Pawn->OnEnteredAircraft, 0);
+                    Utils::ProcessMulticastDelegate(&Pawn->OnEnteredAircraft, 0);
                 }
 
                 PlayerController->ClientActivateSlot(EFortQuickBars::Primary, 0, 0.0f, true, false);
@@ -116,6 +115,24 @@ namespace GamePhaseLogic
         // TODO
     }
 
+    void StartSafeZonesPhase()
+    {
+        SetGamePhase(EAthenaGamePhase::SafeZones);
+    }
+
+    void SpawnInitialSafeZone(UFortGameStateComponent_BattleRoyaleGamePhaseLogic* Logic)
+    {
+        // I've tried to literally copy paste the code from the "storm" command in Player.hpp. Doesn't work. But the command works... :)
+    }
+
+    void UpdateSafeZonesPhase(UFortGameStateComponent_BattleRoyaleGamePhaseLogic* Logic)
+    {
+        auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+
+        if (!Logic->SafeZoneIndicator && TimeSeconds >= Logic->SafeZonesStartTime)
+            SpawnInitialSafeZone(Logic);
+    }
+
     void Tick()
     {
         static auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
@@ -138,19 +155,39 @@ namespace GamePhaseLogic
             if (TimeSeconds >= Logic->AircraftRealStartTime)
             {
                 StartAircraftPhase(Logic);
+            }
+        }
+        else if (Logic->GamePhase == EAthenaGamePhase::Aircraft)
+        {
+            auto Aircraft = Logic->Aircrafts_GameState[0].Get();
+            if (TimeSeconds >= Aircraft->DropEndTime)
+            {
+                StartSafeZonesPhase();
+                Logic->GamePhaseStep = EAthenaGamePhaseStep::StormForming;
+                Logic->SafeZonesStartTime = TimeSeconds + 15.0f;
+            }
+        }
+        else if (Logic->GamePhase == EAthenaGamePhase::SafeZones)
+        {
+            UpdateSafeZonesPhase(Logic);
 
-                // TODO KeysAndLock_DisplayCase calls PickLootDrops somehow, idk how because FModels decompiler isn't good enough so i gotta port my decompiler to 26.30 to check :/
-                auto KeysAndLocks = Utils::GetAllActorsOfClass<ABGA_KeysAndLocks_DisplayCase_C>();
-                for (auto Case : KeysAndLocks)
+            if (Logic->Aircrafts_GameState.Num() > 0)
+            {
+                for (int i = Logic->Aircrafts_GameState.Num() - 1; i >= 0; i--)
                 {
-                    auto GenLoot = Loot::Get(Case->Tier_Group_Name);
-                    for (auto thing : GenLoot)
-                        Case->Loot.Add(UFortKismetLibrary::CreateItemEntry(thing.first, thing.second, 0));
+                    auto Aircraft = Logic->Aircrafts_GameState[i].Get();
+                    if (!Aircraft)
+                    {
+RemoveAircraft:
+                        Logic->Aircrafts_GameState.Remove(i);
+                        continue;
+                    }
 
-                    Case->ItemDefinition = (UFortWorldItemDefinition*)Case->Loot[0].ItemDefinition;
-                    Case->SpawnCount = Case->Loot[0].Count;
-                    Case->OnRep_ItemDefinition();
-                    Case->ForceNetUpdate();
+                    if (TimeSeconds >= Aircraft->FlightEndTime)
+                    {
+                        Aircraft->K2_DestroyActor();
+                        goto RemoveAircraft;
+                    }
                 }
             }
         }
