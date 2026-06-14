@@ -160,8 +160,29 @@ namespace GamePhaseLogic
         else if (Logic->GamePhase == EAthenaGamePhase::Aircraft)
         {
             auto Aircraft = Logic->Aircrafts_GameState[0].Get();
-            if (TimeSeconds >= Aircraft->DropEndTime)
+            if (Logic->bAircraftIsLocked && TimeSeconds >= Aircraft->DropStartTime)
             {
+                Logic->bAircraftIsLocked = false;
+            }
+            else if (TimeSeconds >= Aircraft->DropEndTime)
+            {
+                // Doesn't work.
+                // for (auto& WeakPtr : Utils::GetPlayerControllerList())
+                // {
+                //     auto Controller = WeakPtr.Get();
+                //     if (!Controller || !Controller->IsA(AFortPlayerControllerAthena::StaticClass()))
+                //         continue;
+
+                //     auto PlayerController = (AFortPlayerControllerAthena*)Controller;
+                //     auto AircraftComponent = (UFortControllerComponent_Aircraft*)PlayerController->GetComponentByClass(UFortControllerComponent_Aircraft::StaticClass());
+                //     if (!AircraftComponent || !AircraftComponent->CurrentAircraft)
+                //         continue;
+
+                //     *(bool*)(int64(AircraftComponent) + 0x13D) = true;
+                //     GameMode->RestartPlayer(Controller);
+                //     *(bool*)(int64(AircraftComponent) + 0x13D) = false;
+                // }
+
                 StartSafeZonesPhase();
                 Logic->GamePhaseStep = EAthenaGamePhaseStep::StormForming;
                 Logic->SafeZonesStartTime = TimeSeconds + 15.0f;

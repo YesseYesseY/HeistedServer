@@ -76,6 +76,7 @@ namespace GameMode
             Logic->WarmupCountdownEndTime = TimeSeconds + 60.0f;
             Logic->AircraftStartTime = Logic->WarmupCountdownEndTime;
             Logic->AircraftRealStartTime = Logic->WarmupCountdownEndTime;
+            Logic->bAircraftIsLocked = true;
 
             GameMode->bWorldIsReady = true;
 
