@@ -91,9 +91,7 @@ namespace GamePhaseLogic
 
                 bool DumpInventoryWhenStartingAircraft = true;
                 if (DumpInventoryWhenStartingAircraft) // Athena.DumpInventoryWhenStartingAircraft
-                {
-                    // TODO
-                }
+                    Inventory::DumpInventory(PlayerController, false);
 
                 // Controller->Reset();
                 void (*reset)(AActor*) = decltype(reset)(((void**)Controller->VTable)[1704 / 8]);

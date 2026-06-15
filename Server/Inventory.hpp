@@ -1,22 +1,36 @@
 namespace Inventory
 {
-    FFortItemEntry* FindItemEntry(AFortPlayerController* PlayerController, FGuid& ItemGuid)
+    FFortItemEntry* FindItemEntry(AFortPlayerController* PlayerController, FGuid& ItemGuid, int* Idx = nullptr)
     {
-        for (auto& ItemEntry : PlayerController->WorldInventory->Inventory.ReplicatedEntries)
+        auto& Entries = PlayerController->WorldInventory->Inventory.ReplicatedEntries;
+        for (int i = 0; i < Entries.Num(); i++)
         {
+            auto& ItemEntry = Entries[i];
             if (UKismetGuidLibrary::EqualEqual_GuidGuid(ItemEntry.ItemGuid, ItemGuid))
+            {
+                if (Idx)
+                    *Idx = i;
+
                 return &ItemEntry;
+            }
         }
 
         return nullptr;
     }
 
-    FFortItemEntry* FindItemEntry(AFortPlayerController* PlayerController, UFortItemDefinition* ItemDef)
+    FFortItemEntry* FindItemEntry(AFortPlayerController* PlayerController, UFortItemDefinition* ItemDef, int* Idx = nullptr)
     {
-        for (auto& ItemEntry : PlayerController->WorldInventory->Inventory.ReplicatedEntries)
+        auto& Entries = PlayerController->WorldInventory->Inventory.ReplicatedEntries;
+        for (int i = 0; i < Entries.Num(); i++)
         {
+            auto& ItemEntry = Entries[i];
             if (ItemEntry.ItemDefinition == ItemDef)
+            {
+                if (Idx)
+                    *Idx = i;
+
                 return &ItemEntry;
+            }
         }
 
         return nullptr;
@@ -35,26 +49,99 @@ namespace Inventory
         }
     }
 
+    void RemoveIndex(AFortPlayerController* PlayerController, int Idx)
+    {
+        PlayerController->WorldInventory->Inventory.ReplicatedEntries.Remove(Idx);
+        PlayerController->WorldInventory->Inventory.ItemInstances.Remove(Idx);
+        Update(PlayerController);
+    }
+
+    void DumpInventory(AFortPlayerController* PlayerController, bool DropItems)
+    {
+        FVector Pos = { 0, 0, 0 };
+        if (DropItems && PlayerController->Pawn)
+            Pos = PlayerController->Pawn->K2_GetActorLocation();
+
+        auto& Entries = PlayerController->WorldInventory->Inventory.ReplicatedEntries;
+        for (int i = Entries.Num() - 1; i >= 0; i--)
+        {
+            auto& ItemEntry = Entries[i];
+            auto ItemDef = (UFortWorldItemDefinition*)ItemEntry.ItemDefinition;
+            if (ItemDef->bCanBeDropped)
+            {
+                if (DropItems)
+                {
+                    auto Pickup = Utils::SpawnActor<AFortPickupAthena>(Pos);
+                    Pickup->PrimaryPickupItemEntry = ItemEntry;
+                    Pickup->TossPickup(Pos, nullptr, 1, true, false, EFortPickupSourceTypeFlag::Other, EFortPickupSpawnSource::Unset);
+                }
+
+                RemoveIndex(PlayerController, i);
+            }
+        }
+    }
+
     UFortWorldItem* GiveItem(AFortPlayerController* PlayerController, UFortItemDefinition* ItemDef, int32 Count = -1)
     {
         if (!ItemDef || Count == 0)
             return nullptr;
 
-        if (Count == -1)
-            Count = ItemDef->GetMaxStackSize(nullptr);
+        auto MaxStackSize = ItemDef->GetMaxStackSize(nullptr);
 
-        auto Item = (UFortWorldItem*)ItemDef->CreateTemporaryItemInstanceBP(Count, 1);
-        auto& Inv = PlayerController->WorldInventory->Inventory;
+        if (Count == -1)
+            Count = MaxStackSize;
+
+        UFortWorldItem* Ret = nullptr;
+        int SlotCount = 0;
+
+        auto& Entries = PlayerController->WorldInventory->Inventory.ReplicatedEntries;
+        for (int i = 0; i < Entries.Num(); i++)
+        {
+            auto& ItemEntry = Entries[i];
+
+            if (ItemEntry.ItemDefinition != ItemDef || Count <= 0 || ItemEntry.Count >= MaxStackSize)
+                continue;
+
+            auto HowManyToAdd = std::min(MaxStackSize - ItemEntry.Count, Count);
+            Count -= HowManyToAdd;
+
+            ItemEntry.Count += HowManyToAdd;
+            Update(PlayerController, &ItemEntry);
+
+            Ret = PlayerController->WorldInventory->Inventory.ItemInstances[i];
+        }
+
+        int InitialAmmo = -1;
         if (ItemDef->IsA(UFortWorldItemDefinition::StaticClass()))
         {
             auto WorldItemDef = (UFortWorldItemDefinition*)ItemDef;
-            Item->ItemEntry.LoadedAmmo = WorldItemDef->GetInitialAmmo(1);
+            InitialAmmo = WorldItemDef->GetInitialAmmo(1);
+            // TODO bForceFocusWhenAdded
+            //      bShouldShowItemToast
         }
-        Inv.ReplicatedEntries.Add(Item->ItemEntry);
-        Inv.ItemInstances.Add(Item);
-        Update(PlayerController);
 
-        return Item;
+        while (Count > 0)
+        {
+            if (!ItemDef->bAllowMultipleStacks && Ret)
+                break;
+
+            int ToAdd = std::min(Count, MaxStackSize);
+            auto Item = (UFortWorldItem*)ItemDef->CreateTemporaryItemInstanceBP(ToAdd, 1);
+            if (InitialAmmo != -1)
+                Item->ItemEntry.LoadedAmmo = InitialAmmo;
+
+            auto& Inv = PlayerController->WorldInventory->Inventory;
+            Inv.ReplicatedEntries.Add(Item->ItemEntry);
+            Inv.ItemInstances.Add(Item);
+            Update(PlayerController);
+
+            Count -= ToAdd;
+            Ret = Item;
+        }
+
+        // TODO Drop leftovers
+
+        return Ret;
     }
 
     void EquipItemEntry(AFortPlayerController* PlayerController, FFortItemEntry* ItemEntry)
@@ -74,10 +161,9 @@ namespace Inventory
 
     void ServerHandlePickupInfo(AFortPlayerPawn* Pawn, AFortPickup* Pickup, FFortPickupRequestInfo& Params)
     {
-        Utils::SetWeakPtr(Pickup->PickupLocationData.PickupTarget, Pawn);
-        Pickup->PickupLocationData.FlyTime = Params.FlyTime / 4;
-        Pickup->PickupLocationData.bPlayPickupSound = Params.bPlayPickupSound;
-        Pickup->OnRep_PickupLocationData();
+        Pickup->bForceDefaultFlyTime = true;
+        Pickup->DefaultFlyTime = Params.FlyTime / 4; // TODO FlyTime still doesn't feel right, look more into this
+        Pickup->BlueprintSetPickupTarget(Pawn, Params.bPlayPickupSound);
     }
 
     void GivePickupToPlayer(AFortPickup* Pickup, uintptr_t InventoryInterface, uint8 a3)
@@ -120,6 +206,23 @@ namespace Inventory
         return Ret;
     }
 
+    void RemoveItem(AFortPlayerController* PlayerController, FGuid& ItemGuid, int32 Count)
+    {
+        int Idx = -1;
+        if (auto ItemEntry = FindItemEntry(PlayerController, ItemGuid, &Idx))
+        {
+            if (Count >= ItemEntry->Count)
+            {
+                RemoveIndex(PlayerController, Idx);
+            }
+            else
+            {
+                ItemEntry->Count -= Count;
+                Update(PlayerController, ItemEntry);
+            }
+        }
+    }
+
     void K2_RemoveItemFromPlayer(UObject* Object, FFrame* Stack, int32* Ret)
     {
         FRAME_PROP(AFortPlayerController*, PlayerController);
@@ -158,12 +261,61 @@ namespace Inventory
         }
     }
 
+    void ServerAttemptInventoryDrop(AFortPlayerController* PlayerController, FGuid& ItemGuid, int32 Count, bool bTrash)
+    {
+        if (Count <= 0)
+            return;
+
+        int Idx = -1;
+        if (auto ItemEntry = FindItemEntry(PlayerController, ItemGuid, &Idx))
+        {
+            auto Pawn = (AFortPlayerPawn*)PlayerController->Pawn;
+            auto Pos = Pawn->K2_GetActorLocation();
+
+            AFortPickup* Pickup = nullptr;
+            if (!bTrash)
+            {
+                Pickup = Utils::SpawnActor<AFortPickupAthena>(Pos);
+                Pickup->PrimaryPickupItemEntry = *ItemEntry;
+            }
+
+            int32 Removed = 0;
+            if (Count >= ItemEntry->Count)
+            {
+                Removed = ItemEntry->Count;
+                RemoveIndex(PlayerController, Idx);
+            }
+            else
+            {
+                Removed = Count;
+                ItemEntry->Count -= Count;
+                Update(PlayerController, ItemEntry);
+            }
+
+            if (Pickup)
+            {
+                Pickup->PrimaryPickupItemEntry.Count = Removed;
+                // TODO real tossing
+                Pickup->TossPickup(Pos, Pawn, Removed, true, false, EFortPickupSourceTypeFlag::Player, EFortPickupSpawnSource::TossedByPlayer);
+            }
+        }
+    }
+
+    void InterfaceRemoveItem(int64 InventoryInterface, FGuid& ItemGuid, int32 Count, bool bForceRemoval)
+    {
+        AFortPlayerController* Controller = (AFortPlayerController*)(InventoryInterface - 0x8B8);
+        RemoveItem(Controller, ItemGuid, Count);
+    }
+
     void Init()
     {
         Hook::VTable<AFortPlayerControllerAthena>(4456 / 8, ServerExecuteInventoryItem);
+        Hook::VTable<AFortPlayerControllerAthena>(4544 / 8, ServerAttemptInventoryDrop);
         Hook::VTable<AFortPlayerPawnAthena>(4576 / 8, ServerHandlePickupInfo);
 
         Hook::Function(InSDKUtils::GetImageBase() + 0x838A8A0, GivePickupToPlayer);
+        Hook::Function(InSDKUtils::GetImageBase() + 0x8887A18, InterfaceRemoveItem);
+
         Hook::Function(InSDKUtils::GetImageBase() + 0x8CA4A00, WeaponModAmmo, &WeaponModAmmoOriginal);
 
         Hook::UFunc("Function FortniteGame.FortKismetLibrary.K2_RemoveItemFromPlayer", K2_RemoveItemFromPlayer);

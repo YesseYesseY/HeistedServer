@@ -19,6 +19,7 @@ using namespace SDK;
 #include <Utils.hpp>
 #include <Memcury.hpp>
 
+#include "Inventory.hpp"
 #include "GameFeatures.hpp"
 #include "Loot.hpp"
 #include "Vehicles.hpp"
@@ -27,7 +28,6 @@ using namespace SDK;
 #include "Net.hpp"
 #include "DataLayers.hpp"
 #include "Abilities.hpp"
-#include "Inventory.hpp"
 #include "GameMode.hpp"
 #include "Player.hpp"
 #include "Building.hpp"
@@ -61,7 +61,17 @@ DWORD MainThread(HMODULE Module)
     Utils::FindObjectFast<UCurieGlobals>("Default__CurieGlobals")->bEnableCurie = false;
 
     Utils::ExecuteConsoleCommand(L"log LogFortUIDirector None");
+    Utils::ExecuteConsoleCommand(L"log LogGarbage None");
+    Utils::ExecuteConsoleCommand(L"log LogOnline None");
+    Utils::ExecuteConsoleCommand(L"log LogOnlineParty None");
+    Utils::ExecuteConsoleCommand(L"log LogOnlineIdentity None");
+    Utils::ExecuteConsoleCommand(L"log LogFortChat None");
+    Utils::ExecuteConsoleCommand(L"log LogFortLoadingScreen None");
+    Utils::ExecuteConsoleCommand(L"log LogEOSMessaging None");
+
     // Utils::ExecuteConsoleCommand(L"log LogAbilitySystem VeryVerbose");
+    // Utils::ExecuteConsoleCommand(L"log LogFort VeryVerbose");
+
     Utils::ExecuteConsoleCommand(L"open Asteria_Terrain");
 
     return 0;

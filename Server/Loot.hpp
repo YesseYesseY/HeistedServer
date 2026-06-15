@@ -265,7 +265,7 @@ namespace Loot
         float a2 = Container->LootTossConeHalfAngle_Athena;
 
         // Probably faster to just do int v13 = 4; it's been 4 on every container ive tried, which is: chests, ammo boxes, produce boxes, coolers, fishing rod barrels
-        int v13 = -((int)(float)(-0.5f - (float)((float)(a2 * 0.055556f) + (float)(a2 * 0.055556f))) >> 1);
+        int v13 = round(a2 / 18.0f); // -((int)(float)(-0.5f - (float)((float)(a2 * 0.055556f) + (float)(a2 * 0.055556f))) >> 1);
 
         auto Drops = Get(Container->SearchLootTierGroup);
         auto DropLocation = UKismetMathLibrary::TransformLocation(Container->GetTransform(), { Container->LootSpawnLocation_Athena.X, Container->LootSpawnLocation_Athena.Y, Container->LootSpawnLocation_Athena.Z });

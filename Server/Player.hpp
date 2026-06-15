@@ -100,6 +100,18 @@ namespace Player
             Pickup->PrimaryPickupItemEntry.LoadedAmmo = 30;
             Pickup->TossPickup(Pos, nullptr, 1, true, false, EFortPickupSourceTypeFlag::Other, EFortPickupSpawnSource::Unset);
         }
+        else if (Msg == L"items")
+        {
+            Inventory::GiveItem(Controller, Utils::FindObjectFast<UFortItemDefinition>("WoodItemData"));
+            Inventory::GiveItem(Controller, Utils::FindObjectFast<UFortItemDefinition>("StoneItemData"));
+            Inventory::GiveItem(Controller, Utils::FindObjectFast<UFortItemDefinition>("MetalItemData"));
+            Inventory::GiveItem(Controller, Utils::FindObjectFast<UFortItemDefinition>("WID_Melee_Katana_R"));
+            Inventory::GiveItem(Controller, Utils::FindObjectFast<UFortItemDefinition>("WID_GrenadeLauncher_Hopscotch_Athena_SR"));
+            Inventory::GiveItem(Controller, Utils::FindObjectFast<UFortItemDefinition>("AmmoDataRockets"));
+            Inventory::GiveItem(Controller, Utils::FindObjectFast<UFortItemDefinition>("AGID_KeysAndLocks_Key"));
+            // static auto ItemDef = Utils::FindObjectFast<UFortWeaponRangedItemDefinition>("Athena_ShockGrenade");
+            // Inventory::GiveItem(Controller, ItemDef, 18);
+        }
         else if (Msg == L"storm")
         {
             auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());

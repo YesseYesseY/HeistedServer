@@ -19,6 +19,8 @@ namespace Building
         {
             auto Build = Utils::SpawnActor<ABuildingSMActor>(BuildingClass, CreateBuildingData.BuildLoc, CreateBuildingData.BuildRot);
             Build->InitializeKismetSpawnedBuildingActor(Build, PlayerController, true, nullptr);
+
+            UFortKismetLibrary::K2_PayBuildingResourceCost(PlayerController, Build->ResourceType, 10);
         }
 
         for (auto Actor : Existing)

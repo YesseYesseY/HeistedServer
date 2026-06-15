@@ -1,3 +1,5 @@
+UE_ENUM_OPERATORS(EFortPickupSourceTypeFlag);
+
 namespace Utils
 {
     template <typename T = AActor>

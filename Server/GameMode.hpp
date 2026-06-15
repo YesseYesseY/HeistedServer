@@ -126,13 +126,6 @@ namespace GameMode
         for (int i = 0; i < 5; i++) // 5 = The 4 main builds + EditTool, after 5 there is just smartbuilds
             Inventory::GiveItem(PlayerController, GameMode->StartingItems[i].Item, GameMode->StartingItems[i].Count);
 
-        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WoodItemData"));
-        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("StoneItemData"));
-        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("MetalItemData"));
-        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_Melee_Katana_R"));
-        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("WID_GrenadeLauncher_Hopscotch_Athena_SR"));
-        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("AmmoDataRockets"));
-        Inventory::GiveItem(PlayerController, Utils::FindObjectFast<UFortItemDefinition>("AGID_KeysAndLocks_Key"));
     }
 
     void Init()
