@@ -15,6 +15,8 @@ namespace GameMode
             GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
             GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
             GameState->OnRep_CurrentPlaylistInfo();
+            void (*SetCurrentPlaylistName)(AFortGameMode*, FName) = decltype(SetCurrentPlaylistName)(InSDKUtils::GetImageBase() + 0x814654C);
+            SetCurrentPlaylistName(GameMode, Playlist->PlaylistName);
 
             auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
 #if 0
@@ -36,9 +38,6 @@ namespace GameMode
 
         if (GameMode->NumPlayers > 0)
         {
-            // 19.40 Calls SetGamePhase(EAthenaGamePhase::Warmup) on AFortGameModeAthena::HandleMatchHasStarted, so this is close enough to real logic
-            GamePhaseLogic::SetGamePhase(EAthenaGamePhase::Warmup);
-
             GameFeatures::Init();
             Vehicles::Init();
             Loot::Init();
@@ -57,20 +56,6 @@ namespace GameMode
                 DataLayers::Activate(Utils::FindObjectFast<UDataLayerAsset>(std::format("Asteria_DL_RT_{}", RTs[i])));
 
             auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
-            auto MapInfo = GameState->MapInfo;
-
-            FAircraftFlightConstructionInfo FCI = { EAirCraftBehavior::Default };
-            FCI.AircraftCount = 1;
-            FAircraftFlightInfo& (*IFP)(AFortAthenaMapInfo*, AFortGameState*, UFortGameStateComponent_BattleRoyaleGamePhaseLogic*, FAircraftFlightConstructionInfo&) = decltype(IFP)(InSDKUtils::GetImageBase() + 0x787F2F8);
-            IFP(MapInfo, GameState, Logic, FCI);
-
-            TArray<AFortAthenaAircraft*> Aircrafts;
-            for (int i = 0; i < MapInfo->FlightInfos.Num(); i++)
-            {
-                Aircrafts.Add(AFortAthenaAircraft::SpawnAircraft(UWorld::GetWorld(), MapInfo->AircraftClass, MapInfo->FlightInfos[i]));
-            }
-            Logic->SetAircrafts(Aircrafts);
-
             auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
             Logic->WarmupCountdownStartTime = TimeSeconds;
             Logic->WarmupCountdownEndTime = TimeSeconds + 60.0f;
@@ -128,10 +113,70 @@ namespace GameMode
 
     }
 
+    // Gets called before StartWarmupPhase gets called in HandleMatchHasStarted
+    bool (*sub_1479229DCOriginal)(AFortGameModeAthena* GameMode, int64 a2);
+    bool sub_1479229DC(AFortGameModeAthena* GameMode, int64 a2)
+    {
+        if (sub_1479229DCOriginal(GameMode, a2))
+        {
+            int64 (*sub_140FAEAF4)(void*, char) = decltype(sub_140FAEAF4)(InSDKUtils::GetImageBase() + 0xFAEAF4);
+            int64 v34 = sub_140FAEAF4(UWorld::GetWorld(), 0);
+            if (v34)
+                (*(void (__fastcall **)(int64))(*(uint64*)v34 + 1872))(v34);
+        }
+
+        auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+        GamePhaseLogic::StartWarmupPhase(Logic);
+
+        return false; // Returning true or sub_1479229DCOriginal will just do the same thing a second time
+    }
+
+    void OnPlaylistDataLoadedPatch()
+    {
+        int64 (*IFP)(void* MapInfo, void* GameState, void* Logic, char, int, int, float) = decltype(IFP)(InSDKUtils::GetImageBase() + 0x787FF4C);
+
+        auto Logic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+        auto GameState = (AFortGameStateAthena*)Logic->GetOwner();
+        auto GameMode = (AFortGameModeAthena*)GameState->AuthorityGameMode;
+
+        AFortAthenaMapInfo* (*GetMapInfo)(void* GameMode, void* GameState) = decltype(GetMapInfo)(InSDKUtils::GetImageBase() + 0x792289C);
+        auto MapInfo = GetMapInfo(GameMode, GameState);
+
+        if (MapInfo)
+        {
+            // TODO Stuff
+            IFP(MapInfo, GameState, Logic, 0, 0, 0, 360.0f);
+            // TODO InitializeSafeZoneLocations
+        }
+    }
+
     void Init()
     {
         Hook::VTable<AFortGameModeBR>(2328 / 8, ReadyToStartMatchHook);
         Hook::VTable<AFortGameModeBR>(1832 / 8, SpawnDefaultPawnForHook);
         Hook::VTable<AFortGameModeBR>(1880 / 8, HandleStartingNewPlayer, &HandleStartingNewPlayerOriginal);
+
+        Hook::Function(InSDKUtils::GetImageBase() + 0x79229DC, sub_1479229DC, &sub_1479229DCOriginal);
+
+        // OnPlaylistDataLoaded patch
+        {
+            auto PatchAddr = InSDKUtils::GetImageBase() + 0x791C907;
+
+            DWORD yes;
+            VirtualProtect((LPVOID)PatchAddr, 26, PAGE_EXECUTE_READWRITE, &yes);
+            *(uint8*)(PatchAddr) = 0x00;
+
+            *(uint8*)(PatchAddr) = 0x48;
+            *(uint8*)(PatchAddr + 1) = 0xB8;
+            *(uintptr_t*)(PatchAddr + 2) = (uintptr_t)OnPlaylistDataLoadedPatch;
+            *(uint8*)(PatchAddr + 10) = 0xFF;
+            *(uint8*)(PatchAddr + 11) = 0xD0;
+            for (int i = 0; i < 14; i++)
+            {
+                *(uint8*)(PatchAddr + 12 + i) = 0x90;
+            }
+
+            VirtualProtect((LPVOID)PatchAddr, 26, yes, &yes);
+        }
     }
 }

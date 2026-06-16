@@ -7,6 +7,26 @@ namespace GamePhaseLogic
         nfunc(Logic, NewPhase);
     }
 
+    void StartWarmupPhase(UFortGameStateComponent_BattleRoyaleGamePhaseLogic* Logic)
+    {
+        auto GameState = (AFortGameStateAthena*)Logic->GetOwner();
+        auto Playlist = GameState->CurrentPlaylistInfo.BasePlaylist;
+
+        if (Logic->GamePhase != EAthenaGamePhase::Warmup)
+        {
+            auto MapInfo = GameState->MapInfo;
+
+            TArray<AFortAthenaAircraft*> Aircrafts;
+            for (int i = 0; i < MapInfo->FlightInfos.Num(); i++)
+            {
+                Aircrafts.Add(AFortAthenaAircraft::SpawnAircraft(UWorld::GetWorld(), MapInfo->AircraftClass, MapInfo->FlightInfos[i]));
+            }
+            Logic->SetAircrafts(Aircrafts);
+
+            SetGamePhase(EAthenaGamePhase::Warmup);
+        }
+    }
+
     // NOTE: The camera bug on the battle bus is not my fault, it was actually happning during that time
     //       https://youtu.be/FJEvSW1Wxpw?t=17
     void StartAircraftPhase(UFortGameStateComponent_BattleRoyaleGamePhaseLogic* Logic, bool AircraftAlreadySpawned = false)
@@ -47,6 +67,14 @@ namespace GamePhaseLogic
 
             // TODO
         }
+
+        auto TimeSecondsDouble = UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+        auto TimeSeconds = (float)TimeSecondsDouble;
+
+        Logic->AircraftStartTime = TimeSeconds;
+        Logic->AircraftRealStartTime = TimeSecondsDouble;
+        GameState->MatchStartTime = TimeSeconds;
+        GameState->RealMatchStartTime = TimeSecondsDouble;
 
         if (Playlist->MaxTeamSize > 1)
         {
@@ -106,7 +134,6 @@ namespace GamePhaseLogic
 
         SetGamePhase(EAthenaGamePhase::Aircraft);
 
-        auto TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
         for (auto Aircraft : Logic->Aircrafts_GameState)
             Aircraft.Get()->StartFlightPath(TimeSeconds);
 

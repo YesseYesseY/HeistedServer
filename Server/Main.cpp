@@ -70,7 +70,7 @@ DWORD MainThread(HMODULE Module)
     Utils::ExecuteConsoleCommand(L"log LogEOSMessaging None");
 
     // Utils::ExecuteConsoleCommand(L"log LogAbilitySystem VeryVerbose");
-    // Utils::ExecuteConsoleCommand(L"log LogFort VeryVerbose");
+    Utils::ExecuteConsoleCommand(L"log LogFort VeryVerbose");
 
     Utils::ExecuteConsoleCommand(L"open Asteria_Terrain");
 
